@@ -12,5 +12,3 @@ node_modules
 *.pem
 secrets/
 
-# Local Netlify folder
-.netlify

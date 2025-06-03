@@ -1,5 +1,6 @@
 // Сервис для работы с Replicate API через n8n
-const N8N_BASE_URL = 'http://89.117.63.81:5678/webhook';
+const N8N_BASE_URL = 'https://n8n.89.117.63.81.sslip.io/webhook';
+
 
 class ReplicateService {
   constructor() {
