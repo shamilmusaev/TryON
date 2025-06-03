@@ -1,11 +1,9 @@
-// Сервис для работы с Replicate API через Netlify Functions
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? '/.netlify/functions'  // Netlify Functions в продакшене
-  : 'http://localhost:3002/api';  // Локальный proxy-server в разработке
+// Сервис для работы с Replicate API через n8n
+const N8N_BASE_URL = 'http://89.117.63.81:5678/webhook';
 
 class ReplicateService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = N8N_BASE_URL;
   }
 
   // Конвертация файла в base64 data URL
@@ -33,7 +31,7 @@ class ReplicateService {
   // Создание задачи на генерацию
   async createPrediction(humanImg, garmImg, garmentDescription = 'fashionable clothing') {
     try {
-      console.log('📡 Using API endpoint:', `${this.baseURL}/replicate`);
+      console.log('📡 Using n8n webhook:', `${this.baseURL}/replicate`);
       
       const response = await fetch(`${this.baseURL}/replicate`, {
         method: 'POST',
@@ -57,9 +55,9 @@ class ReplicateService {
     } catch (error) {
       console.error('Error creating prediction:', error);
       
-      // Если proxy не работает, показываем полезную ошибку
+      // Если n8n не работает, показываем полезную ошибку
       if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
-        throw new Error('Proxy server not running. Please start the proxy server with: cd server && npm install && npm start');
+        throw new Error('n8n webhook недоступен. Проверьте что workflow активирован и n8n запущен на ' + this.baseURL);
       }
       
       throw error;
@@ -69,7 +67,7 @@ class ReplicateService {
   // Получение статуса задачи
   async getPrediction(predictionId) {
     try {
-      const response = await fetch(`${this.baseURL}/replicate/${predictionId}`, {
+      const response = await fetch(`${this.baseURL}/replicate-status?id=${predictionId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -90,13 +88,13 @@ class ReplicateService {
   // Основной метод для генерации try-on
   async generateTryOn(personImage, clothingImage, garmentDescription = "clothing item") {
     try {
-      console.log('🚀 Starting try-on generation with Replicate...');
+      console.log('🚀 Starting try-on generation with n8n + Replicate...');
       
       // Конвертируем изображения в base64 data URLs если они File объекты
       const personImageData = await this.fileToDataURL(personImage);
       const clothingImageData = await this.fileToDataURL(clothingImage);
 
-      // Создаем prediction
+      // Создаем prediction через n8n
       const response = await fetch(`${this.baseURL}/replicate`, {
         method: 'POST',
         headers: {
@@ -109,13 +107,23 @@ class ReplicateService {
         })
       });
 
+      // Логируем сырой текстовый ответ
+      const rawResponseText = await response.clone().text(); // Клонируем, чтобы можно было прочитать тело дважды
+      console.log('📦 Raw response from n8n:', rawResponseText);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        // Попытаемся распарсить ошибку как JSON, если возможно, или используем текстовый ответ
+        let errorData = {};
+        try {
+          errorData = JSON.parse(rawResponseText); 
+        } catch (e) {
+          errorData.message = rawResponseText || `HTTP ${response.status}: ${response.statusText}`;
+        }
         throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const prediction = await response.json();
-      console.log('✅ Prediction created:', prediction.id);
+      console.log('✅ Prediction created via n8n:', prediction.id);
 
       // Возвращаем объект с методом wait для отслеживания прогресса
       return {
@@ -125,12 +133,11 @@ class ReplicateService {
       };
 
     } catch (error) {
-      console.error('❌ Replicate generation failed:', error);
+      console.error('❌ n8n + Replicate generation failed:', error);
       
-      // Если proxy не работает в development, показываем полезную ошибку
-      if (process.env.NODE_ENV === 'development' && 
-          (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED'))) {
-        throw new Error('Proxy server not running. Please start: node server/proxy-server.js');
+      // Если n8n не работает, показываем полезную ошибку
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+        throw new Error('n8n недоступен. Убедитесь что:\n1. n8n запущен на ' + this.baseURL + '\n2. Workflow активирован\n3. Webhook настроен правильно');
       }
       
       throw error;
@@ -148,10 +155,8 @@ class ReplicateService {
       try {
         attempts++;
         
-        // Получаем статус prediction
-        const statusUrl = process.env.NODE_ENV === 'production' 
-          ? `/.netlify/functions/replicate-status?id=${predictionId}`
-          : `http://localhost:3002/api/replicate/${predictionId}`;
+        // Получаем статус prediction через n8n
+        const statusUrl = `${this.baseURL}/replicate-status?id=${predictionId}`;
 
         const response = await fetch(statusUrl, {
           method: 'GET',
@@ -259,26 +264,10 @@ class ReplicateService {
     throw new Error(`Invalid file format: received ${typeof imageInput}, expected File object or string URL`);
   }
 
-  // Получение информации о модели
+  // Получение информации о модели (не используется с n8n)
   async getModelInfo() {
-    try {
-      const response = await fetch(`${this.baseURL}/replicate/models/info`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to get model info: ${response.statusText}`);
-      }
-
-      return await response.json();
-
-    } catch (error) {
-      console.error('❌ Failed to get model info:', error);
-      return null;
-    }
+    console.log('ℹ️ Model info not available through n8n webhook');
+    return null;
   }
 
   // Метод для создания множественных вариаций
