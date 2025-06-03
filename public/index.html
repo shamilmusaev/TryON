@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    
+    <!-- Viewport Meta для Safari iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- Theme Colors для разных платформ -->
+    <meta name="theme-color" content="#000000" />
+    <meta name="msapplication-navbutton-color" content="#000000" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="TryOn AI" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Prevent iOS bounce scroll -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="format-detection" content="date=no" />
+    <meta name="format-detection" content="address=no" />
+    <meta name="format-detection" content="email=no" />
+    
+    <!-- Disable iOS double-tap zoom -->
+    <meta name="mobile-web-app-status-bar-style" content="black-translucent" />
+    
+    <!-- App Description -->
+    <meta
+      name="description"
+      content="TryOn AI - AI Fashion Studio для виртуальной примерки одежды"
+    />
+    
+    <!-- Social Media Meta -->
+    <meta property="og:title" content="TryOn AI - Fashion Studio" />
+    <meta property="og:description" content="AI Fashion Studio для виртуальной примерки одежды" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="%PUBLIC_URL%/logo192.png" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo192.png" />
+    
+    <!-- Safari Pinned Tab -->
+    <link rel="mask-icon" href="%PUBLIC_URL%/favicon.ico" color="#00ff88" />
+    
+    <!-- Fonts - Preload для лучшей производительности -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Preload критически важные CSS переменные -->
+    <style>
+      :root {
+        --vh: 1vh;
+      }
+      
+      /* Предотвращение FOUC */
+      body {
+        background-color: #000000;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      
+      #root {
+        min-height: 100vh;
+        min-height: calc(var(--vh, 1vh) * 100);
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+    </style>
+    
+    <title>TryOn AI - Fashion Studio</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    
+    <!-- Safari iOS viewport height fix -->
+    <script>
+      // Фиксируем высоту viewport для Safari iOS
+      function setVH() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', vh + 'px');
+      }
+      
+      setVH();
+      window.addEventListener('resize', setVH);
+      window.addEventListener('orientationchange', setVH);
+    </script>
+  </body>
+</html> 

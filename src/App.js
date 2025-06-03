@@ -1,0 +1,222 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import './index.css';
+import OnboardingPage from './components/OnboardingPage';
+import HomePage from './components/HomePage';
+import UploadPage from './components/UploadPage';
+import ProcessingPage from './components/ProcessingPage';
+import ResultPage from './components/ResultPage';
+
+function App() {
+  const [currentPage, setCurrentPage] = useState('onboarding'); // onboarding, home, upload, processing, result
+  const [tryOnData, setTryOnData] = useState(null); // Данные для генерации
+  const [resultData, setResultData] = useState(null); // Результаты генерации
+
+  // Оптимизация для Safari iOS
+  useEffect(() => {
+    // Фиксируем высоту viewport для iOS Safari
+    const setVH = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    setVH();
+    window.addEventListener('resize', setVH);
+    window.addEventListener('orientationchange', setVH);
+
+    // Предотвращаем zoom на double tap в Safari
+    let lastTouchEnd = 0;
+    const preventZoom = (e) => {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    };
+    
+    document.addEventListener('touchend', preventZoom, { passive: false });
+
+    // Устанавливаем theme-color для Safari
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = '#000000';
+      document.head.appendChild(meta);
+    }
+
+    // Добавляем meta для полноэкранного режима
+    const metaViewport = document.querySelector('meta[name="viewport"]');
+    if (metaViewport) {
+      metaViewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+    }
+
+    return () => {
+      window.removeEventListener('resize', setVH);
+      window.removeEventListener('orientationchange', setVH);
+      document.removeEventListener('touchend', preventZoom);
+    };
+  }, []);
+
+  // Навигационные обработчики
+  const handleNavigation = (page, data = null) => {
+    console.log(`📱 Navigating to: ${page}`, data ? '(with data)' : '');
+    
+    if (data) {
+      if (page === 'processing') {
+        setTryOnData(data);
+      } else if (page === 'result') {
+        setResultData(data);
+      }
+    }
+    
+    setCurrentPage(page);
+  };
+
+  // Начало процесса try-on
+  const handleStartTryOn = () => {
+    handleNavigation('upload');
+  };
+
+  // Завершение загрузки и переход к обработке
+  const handleUploadComplete = (uploadData) => {
+    console.log('📤 Upload complete, starting processing...', uploadData);
+    handleNavigation('processing', uploadData);
+  };
+
+  // Завершение обработки и переход к результату
+  const handleProcessingComplete = (generationResult) => {
+    console.log('✅ Processing complete, showing result...', generationResult);
+    handleNavigation('result', generationResult);
+  };
+
+  // Возврат на предыдущую страницу
+  const handleBack = () => {
+    switch (currentPage) {
+      case 'upload':
+        handleNavigation('home');
+        break;
+      case 'processing':
+        handleNavigation('upload');
+        break;
+      case 'result':
+        handleNavigation('home');
+        break;
+      default:
+        handleNavigation('home');
+    }
+  };
+
+  // Рендер текущей страницы
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'onboarding':
+        return (
+          <OnboardingPage
+            onGetStarted={() => handleNavigation('home')}
+          />
+        );
+
+      case 'home':
+        return (
+          <HomePage
+            onStartProcessing={handleStartTryOn}
+            onNavigation={handleNavigation}
+          />
+        );
+
+      case 'upload':
+        return (
+          <UploadPage
+            onBack={handleBack}
+            onContinue={handleUploadComplete}
+            onNavigation={handleNavigation}
+          />
+        );
+
+      case 'processing':
+        return (
+          <ProcessingPage
+            onBack={handleBack}
+            onComplete={handleProcessingComplete}
+            tryOnData={tryOnData}
+          />
+        );
+
+      case 'result':
+        return (
+          <ResultPage
+            onBack={handleBack}
+            onNavigation={handleNavigation}
+            resultData={resultData}
+          />
+        );
+
+      default:
+        return (
+          <HomePage
+            onStartProcessing={handleStartTryOn}
+            onNavigation={handleNavigation}
+          />
+        );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white overflow-hidden">
+      {/* Page transitions */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentPage}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -100 }}
+          transition={{ 
+            duration: 0.3, 
+            ease: "easeInOut" 
+          }}
+          className="min-h-screen"
+        >
+          {renderCurrentPage()}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Debug info - только в development режиме */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed bottom-4 left-4 z-50 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-xs font-mono border border-gray-700">
+          <div className="text-green-400">Page: {currentPage}</div>
+          <div className="text-blue-400">
+            Try-on data: {tryOnData ? '✓' : '✗'}
+          </div>
+          <div className="text-purple-400">
+            Result data: {resultData ? '✓' : '✗'}
+          </div>
+          {tryOnData && (
+            <div className="text-gray-400 mt-1">
+              Person: {tryOnData.personImage?.name?.slice(0, 10)}...
+              <br />
+              Clothing: {tryOnData.clothingImage?.name?.slice(0, 10)}...
+              <br />
+              Style: {tryOnData.garmentDescription?.slice(0, 15)}...
+            </div>
+          )}
+          {resultData && (
+            <div className="text-gray-400 mt-1">
+              Result: {resultData.status || 'unknown'}
+              <br />
+              ID: {resultData.id?.slice(0, 8)}...
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Global error boundary */}
+      {/* Можно добавить ErrorBoundary компонент здесь */}
+      
+      {/* Service worker для offline support */}
+      {/* Можно добавить PWA функционал */}
+    </div>
+  );
+}
+
+export default App; 

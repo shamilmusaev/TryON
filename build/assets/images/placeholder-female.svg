@@ -1,0 +1,56 @@
+<svg width="400" height="800" viewBox="0 0 400 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#581c87;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="800" fill="url(#grad2)"/>
+  
+  <!-- Female silhouette -->
+  <g transform="translate(200, 400)">
+    <!-- Head -->
+    <circle cx="0" cy="-160" r="45" fill="#db7093" opacity="0.8"/>
+    
+    <!-- Hair -->
+    <path d="M -45 -160 Q -50 -200 -20 -210 Q 0 -215 20 -210 Q 50 -200 45 -160" fill="#db7093" opacity="0.6"/>
+    
+    <!-- Body -->
+    <rect x="-35" y="-110" width="70" height="110" rx="8" fill="#db7093" opacity="0.8"/>
+    
+    <!-- Arms -->
+    <rect x="-60" y="-95" width="20" height="90" rx="10" fill="#db7093" opacity="0.8"/>
+    <rect x="40" y="-95" width="20" height="90" rx="10" fill="#db7093" opacity="0.8"/>
+    
+    <!-- Dress/Skirt -->
+    <path d="M -35 0 L 35 0 L 45 60 L -45 60 Z" fill="#db7093" opacity="0.8"/>
+    
+    <!-- Legs -->
+    <rect x="-25" y="60" width="20" height="90" rx="10" fill="#db7093" opacity="0.8"/>
+    <rect x="5" y="60" width="20" height="90" rx="10" fill="#db7093" opacity="0.8"/>
+  </g>
+  
+  <!-- Overlay text -->
+  <text x="200" y="700" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="24" font-weight="bold">
+    Female Model
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="80" cy="150" r="3" fill="#10b981" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="320" cy="250" r="2" fill="#10b981" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.8;0.4" dur="3.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="120" cy="550" r="4" fill="#10b981" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  
+  <!-- Fashion elements -->
+  <circle cx="350" cy="400" r="8" fill="#fbbf24" opacity="0.3">
+    <animate attributeName="r" values="8;12;8" dur="4s" repeatCount="indefinite"/>
+  </circle>
+</svg> 
