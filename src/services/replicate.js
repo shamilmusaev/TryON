@@ -107,21 +107,31 @@ class ReplicateService {
         })
       });
 
-      // Логируем сырой текстовый ответ
-      const rawResponseText = await response.clone().text(); // Клонируем, чтобы можно было прочитать тело дважды
-      console.log('📦 Raw response from n8n:', rawResponseText);
+      // Клонируем ответ, чтобы прочитать его как текст для логирования,
+      // а затем еще раз как JSON (или для другой обработки ошибки)
+      const clonedResponse = response.clone();
+      const rawResponseText = await clonedResponse.text();
+      console.log('📦 Raw response from n8n webhook:', rawResponseText);
+      console.log('ℹ️ Response status:', response.status, response.statusText);
 
       if (!response.ok) {
-        // Попытаемся распарсить ошибку как JSON, если возможно, или используем текстовый ответ
-        let errorData = {};
-        try {
-          errorData = JSON.parse(rawResponseText); 
-        } catch (e) {
-          errorData.message = rawResponseText || `HTTP ${response.status}: ${response.statusText}`;
+        let errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+        // Пытаемся извлечь сообщение об ошибке из тела ответа, если оно есть
+        if (rawResponseText) {
+          try {
+            // Пробуем парсить как JSON, если n8n вернул JSON-ошибку
+            const parsedError = JSON.parse(rawResponseText);
+            errorData.message = parsedError.message || parsedError.error || rawResponseText;
+          } catch (e) {
+            // Если не JSON, используем сырой текст как сообщение
+            errorData.message = rawResponseText;
+          }
         }
-        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+        console.error('❌ Error response from n8n:', errorData.message);
+        throw new Error(errorData.message);
       }
 
+      // Теперь, если response.ok, пытаемся парсить оригинальный response как JSON
       const prediction = await response.json();
       console.log('✅ Prediction created via n8n:', prediction.id);
 
@@ -198,6 +208,12 @@ class ReplicateService {
             throw new Error(prediction.error || 'Generation failed');
           case 'canceled':
             throw new Error('Generation was canceled');
+          default:
+            // Обработка неизвестного статуса или просто ничего не делаем,
+            // но ESLint требует default case.
+            // Можно добавить логирование, если это полезно.
+            console.warn(`Unknown prediction status: ${prediction.status}`);
+            break;
         }
 
         // Вызываем callback с прогрессом
