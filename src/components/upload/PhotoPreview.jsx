@@ -95,9 +95,24 @@ const PhotoPreview = ({
         `}>
           ✓ {isPersonPhoto ? 'Your photo uploaded' : 'Clothing item uploaded'}
         </p>
+        {image.wasConverted && (
+          <p className="text-xs text-blue-400 mt-1">
+            🔄 Converted from HEVC for optimal results
+          </p>
+        )}
+        {image.wasOptimizedForAI && (
+          <p className="text-xs text-purple-400 mt-1">
+            📱 iPhone image prepared for AI (metadata cleaned, resized)
+          </p>
+        )}
         {image.name && (
           <p className="text-xs text-gray-500 mt-1 truncate">
             {image.name}
+            {image.originalSize && image.originalSize !== image.size && (
+              <span className="text-gray-400">
+                {' '}• Optimized: {((image.originalSize - image.size) / image.originalSize * 100).toFixed(1)}% smaller
+              </span>
+            )}
           </p>
         )}
       </motion.div>

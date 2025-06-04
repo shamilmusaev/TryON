@@ -18,8 +18,8 @@ export const UPLOAD_STATUS = {
 };
 
 export const FILE_CONSTRAINTS = {
-  MAX_SIZE: 10 * 1024 * 1024, // 10MB
-  ACCEPTED_FORMATS: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+  MAX_SIZE: 15 * 1024 * 1024, // 15MB (увеличено для HEVC файлов)
+  ACCEPTED_FORMATS: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
   MIN_RESOLUTION: { width: 480, height: 640 },
   MAX_RESOLUTION: { width: 4096, height: 4096 }
 };

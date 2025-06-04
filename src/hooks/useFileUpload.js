@@ -1,10 +1,10 @@
 import { useState, useCallback } from 'react';
-import { UPLOAD_STATUS } from '../types/upload.types';
+import imageConverter from '../services/imageConverter';
 
 export const useFileUpload = (options = {}) => {
   const {
-    maxFileSize = 10 * 1024 * 1024, // 10MB
-    allowedTypes = ['image/jpeg', 'image/png', 'image/webp'],
+    maxFileSize = 15 * 1024 * 1024, // 15MB (увеличено для HEVC)
+    allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
     onUploadStart,
     onUploadComplete,
     onUploadError
@@ -13,6 +13,7 @@ export const useFileUpload = (options = {}) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [processingMessage, setProcessingMessage] = useState('');
 
   const validateFile = useCallback((file) => {
     if (!file) {
@@ -23,12 +24,16 @@ export const useFileUpload = (options = {}) => {
       throw new Error(`File size too large. Maximum size is ${Math.round(maxFileSize / 1024 / 1024)}MB`);
     }
 
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error(`File type not supported. Allowed types: ${allowedTypes.join(', ')}`);
+    // Проверяем тип файла (включая HEVC)
+    const isHEVC = imageConverter.isHEVCFormat(file);
+    const isAllowedType = allowedTypes.includes(file.type) || isHEVC;
+    
+    if (!isAllowedType) {
+      throw new Error(`File type not supported. Allowed types: ${allowedTypes.join(', ')}, HEIC, HEIF`);
     }
 
     // Дополнительные проверки для изображений
-    if (file.type.startsWith('image/')) {
+    if (file.type.startsWith('image/') || isHEVC) {
       return new Promise((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
@@ -62,25 +67,46 @@ export const useFileUpload = (options = {}) => {
       setIsUploading(true);
       setError(null);
       setUploadProgress(0);
+      setProcessingMessage('Starting upload...');
 
       onUploadStart?.(file);
 
       // Валидация файла
       await validateFile(file);
+      setUploadProgress(15);
+
+      // Определяем тип обработки
+      const isHEVC = imageConverter.isHEVCFormat(file);
+      const isiPhone = imageConverter.isiPhoneImage(file);
+      
+      if (isHEVC) {
+        setProcessingMessage('Converting HEVC to JPEG...');
+      } else if (isiPhone) {
+        setProcessingMessage('Preparing iPhone image for AI...');
+      } else {
+        setProcessingMessage('Processing image...');
+      }
+      
+      setUploadProgress(30);
+
+      // Обработка изображения (конвертация HEVC, оптимизация, продвинутая обработка)
+      const processedFile = await imageConverter.processImage(file);
+      setUploadProgress(70);
 
       // Симуляция загрузки с прогрессом
+      setProcessingMessage('Finalizing upload...');
       const simulateUpload = () => {
         return new Promise((resolve) => {
-          let progress = 0;
+          let progress = 70;
           const interval = setInterval(() => {
-            progress += Math.random() * 20;
+            progress += Math.random() * 8;
             if (progress >= 100) {
               progress = 100;
               clearInterval(interval);
               resolve();
             }
             setUploadProgress(Math.round(progress));
-          }, 100);
+          }, 150);
         });
       };
 
@@ -88,20 +114,26 @@ export const useFileUpload = (options = {}) => {
 
       // Создаем объект файла с превью
       const fileData = {
-        file,
-        url: URL.createObjectURL(file),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified
+        file: processedFile,
+        originalFile: file, // Сохраняем оригинальный файл для справки
+        url: URL.createObjectURL(processedFile),
+        name: processedFile.name,
+        size: processedFile.size,
+        type: processedFile.type,
+        lastModified: processedFile.lastModified,
+        wasConverted: imageConverter.isHEVCFormat(file), // Флаг конвертации
+        wasOptimizedForAI: imageConverter.isiPhoneImage(file), // Флаг AI оптимизации
+        originalSize: file.size
       };
 
+      setProcessingMessage('Upload complete!');
       onUploadComplete?.(fileData);
       return fileData;
 
     } catch (err) {
       const errorMessage = err.message || 'Upload failed';
       setError(errorMessage);
+      setProcessingMessage('');
       onUploadError?.(errorMessage);
       throw err;
     } finally {
@@ -113,12 +145,14 @@ export const useFileUpload = (options = {}) => {
     setIsUploading(false);
     setUploadProgress(0);
     setError(null);
+    setProcessingMessage('');
   }, []);
 
   return {
     uploadFile,
     isUploading,
     uploadProgress,
+    processingMessage,
     error,
     reset
   };

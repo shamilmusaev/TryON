@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Image, User, Shirt, Upload } from 'lucide-react';
+import { Camera, Image, User, Shirt } from 'lucide-react';
 import PhotoPreview from './PhotoPreview';
+import { useFileUpload } from '../../hooks/useFileUpload';
 
 const EnhancedUploadZone = ({ 
   type = 'person', 
@@ -15,9 +16,18 @@ const EnhancedUploadZone = ({
   className = '' 
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+
+  // Используем наш обновленный хук для загрузки файлов
+  const { uploadFile, isUploading, uploadProgress, processingMessage } = useFileUpload({
+    onUploadComplete: (fileData) => {
+      onImageUpload?.(type, fileData);
+    },
+    onUploadError: (error) => {
+      console.error('Upload error:', error);
+    }
+  });
 
   const isPersonPhoto = type === 'person';
   const colors = {
@@ -36,7 +46,7 @@ const EnhancedUploadZone = ({
     e.preventDefault();
     setIsDragOver(false);
     
-    if (disabled) return;
+    if (disabled || isUploading) return;
     
     const files = Array.from(e.dataTransfer.files);
     const imageFile = files.find(file => file.type.startsWith('image/'));
@@ -47,23 +57,13 @@ const EnhancedUploadZone = ({
   };
 
   const handleFileUpload = async (file) => {
-    if (!file || disabled) return;
+    if (!file || disabled || isUploading) return;
     
-    setIsUploading(true);
-    
-    // Simulate upload delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const imageData = {
-      file,
-      url: URL.createObjectURL(file),
-      name: file.name,
-      size: file.size,
-      type: file.type
-    };
-    
-    onImageUpload?.(type, imageData);
-    setIsUploading(false);
+    try {
+      await uploadFile(file);
+    } catch (error) {
+      // Ошибка уже обработана в хуке
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -76,11 +76,15 @@ const EnhancedUploadZone = ({
   };
 
   const handleCameraCapture = () => {
-    cameraInputRef.current?.click();
+    if (!disabled && !isUploading) {
+      cameraInputRef.current?.click();
+    }
   };
 
   const handleGallerySelect = () => {
-    fileInputRef.current?.click();
+    if (!disabled && !isUploading) {
+      fileInputRef.current?.click();
+    }
   };
 
   const handleRemove = () => {
@@ -128,21 +132,23 @@ const EnhancedUploadZone = ({
               ? `${colors.border} ${colors.bg}` 
               : `${colors.borderDashed} hover:${colors.borderHover} hover:${colors.bgHover}`
           }
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+          ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
         onDrop={handleDrop}
         onDragOver={(e) => {
           e.preventDefault();
-          setIsDragOver(true);
+          if (!disabled && !isUploading) {
+            setIsDragOver(true);
+          }
         }}
         onDragLeave={() => setIsDragOver(false)}
-        whileHover={!disabled ? { scale: 1.01 } : {}}
-        whileTap={!disabled ? { scale: 0.99 } : {}}
-        onClick={!disabled ? handleGallerySelect : undefined}
+        whileHover={!disabled && !isUploading ? { scale: 1.01 } : {}}
+        whileTap={!disabled && !isUploading ? { scale: 0.99 } : {}}
+        onClick={!disabled && !isUploading ? handleGallerySelect : undefined}
       >
         <div className="flex flex-col items-center justify-center h-full p-6 text-center">
           {isUploading ? (
-            // Loading State - правильное центрирование
+            // Loading State с прогрессом
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -153,42 +159,40 @@ const EnhancedUploadZone = ({
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 className={`w-16 h-16 border-4 ${colors.text.replace('text-', 'border-')} border-t-transparent rounded-full`}
               />
-              <div className="text-center">
-                <p className="text-white font-medium">Uploading...</p>
-                <p className="text-gray-400 text-sm">Processing your image</p>
+              <div className="text-center space-y-2">
+                <p className="text-white font-medium">
+                  {processingMessage || 'Processing...'}
+                </p>
+                <div className="w-48 bg-gray-700 rounded-full h-2">
+                  <motion.div
+                    className={`h-2 rounded-full ${colors.text.replace('text-', 'bg-')}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${uploadProgress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+                <p className="text-gray-400 text-xs">{uploadProgress}%</p>
               </div>
             </motion.div>
           ) : (
-            // Default State
             <>
-              {/* Main Icon */}
+              {/* Upload Icon */}
               <motion.div
-                animate={isDragOver ? { scale: 1.1, rotate: 5 } : { scale: 1, rotate: 0 }}
-                transition={{ duration: 0.2 }}
-                className={`
-                  p-6 rounded-full mb-4
-                  ${isDragOver ? colors.bg : 'bg-gray-800/50'}
-                  border border-gray-700
-                `}
+                whileHover={{ scale: 1.1 }}
+                className={`text-6xl mb-4 ${colors.text}`}
               >
-                {isDragOver ? (
-                  <Upload className={`w-8 h-8 ${colors.text}`} />
-                ) : (
-                  <colors.icon className={`w-8 h-8 ${colors.text}`} />
-                )}
+                {type === 'person' ? '🤳' : '👔'}
               </motion.div>
 
-              {/* Text Content */}
-              <div className="space-y-2 mb-6">
-                <h4 className="text-white font-semibold text-lg">
-                  {isDragOver ? 'Drop to upload' : placeholder}
+              {/* Upload Text */}
+              <div className="space-y-3 mb-6">
+                <h4 className="text-white font-medium text-lg">
+                  {placeholder || (isPersonPhoto ? 'Upload Your Photo' : 'Upload Clothing')}
                 </h4>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-400 text-sm max-w-xs">
                   {isDragOver 
-                    ? 'Release to start processing' 
-                    : isPersonPhoto 
-                      ? 'Face camera directly for best results'
-                      : 'Clear background works best'
+                    ? 'Drop your image here' 
+                    : 'Drag & drop an image or choose from camera/gallery'
                   }
                 </p>
               </div>
@@ -203,7 +207,7 @@ const EnhancedUploadZone = ({
                     e.stopPropagation();
                     handleCameraCapture();
                   }}
-                  disabled={disabled}
+                  disabled={disabled || isUploading}
                   className={`
                     flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl
                     ${isPersonPhoto 
@@ -211,6 +215,7 @@ const EnhancedUploadZone = ({
                       : 'bg-orange-500 hover:bg-orange-600 text-black'
                     }
                     font-medium transition-all duration-200 shadow-lg
+                    disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                 >
                   <Camera className="w-4 h-4" />
@@ -225,11 +230,12 @@ const EnhancedUploadZone = ({
                     e.stopPropagation();
                     handleGallerySelect();
                   }}
-                  disabled={disabled}
+                  disabled={disabled || isUploading}
                   className={`
                     flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl
                     border-2 ${colors.border} ${colors.text} hover:${colors.bgHover}
                     font-medium transition-all duration-200
+                    disabled:opacity-50 disabled:cursor-not-allowed
                   `}
                 >
                   <Image className="w-4 h-4" />
@@ -244,10 +250,10 @@ const EnhancedUploadZone = ({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.heic,.heif"
           onChange={handleFileSelect}
           className="hidden"
-          disabled={disabled}
+          disabled={disabled || isUploading}
         />
         
         <input
@@ -257,7 +263,7 @@ const EnhancedUploadZone = ({
           capture="environment"
           onChange={handleFileSelect}
           className="hidden"
-          disabled={disabled}
+          disabled={disabled || isUploading}
         />
       </motion.div>
 
@@ -265,15 +271,15 @@ const EnhancedUploadZone = ({
       <div className="text-center space-y-2">
         <div className="text-xs text-gray-400">
           {isPersonPhoto 
-            ? '📱 Use front camera for selfies, back camera for full body shots'
-            : '📸 Clear, well-lit photos work best • Remove background if possible'
+            ? '📱 iPhone photos: metadata cleanup + optimal sizing for AI'
+            : '🔧 iPhone images: preserving original quality, optimized for AI processing'
           }
         </div>
         
         <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
-          <span>• Max 10MB</span>
-          <span>• JPG, PNG, WebP</span>
-          <span>• Min 480x640</span>
+          <span>• Max 15MB</span>
+          <span>• JPG, PNG, WebP, HEIC</span>
+          <span>• AI-optimized processing</span>
         </div>
       </div>
     </div>
