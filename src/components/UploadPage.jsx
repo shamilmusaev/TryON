@@ -1,312 +1,361 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Sparkles, ArrowDown } from 'lucide-react';
-import EnhancedUploadZone from './upload/EnhancedUploadZone';
-import TipsPanel from './upload/TipsPanel';
-import ProgressIndicator from './ui/ProgressIndicator';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, Camera, Plus, User, Shirt } from 'lucide-react';
+import ProcessingPage from './ProcessingPage';
+import imageConverter from '../services/imageConverter';
 
 const UploadPage = ({ onBack, onContinue, onNavigation }) => {
   const [uploadedImages, setUploadedImages] = useState({
     person: null,
-    clothing: null
+    outfit: null
+  });
+  const [dragStates, setDragStates] = useState({
+    person: false,
+    outfit: false
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [garmentDescription, setGarmentDescription] = useState('');
+  const [processingStates, setProcessingStates] = useState({
+    person: false,
+    outfit: false
+  });
 
-  const handleImageUpload = (type, imageData) => {
-    setUploadedImages(prev => ({
-      ...prev,
-      [type]: imageData
-    }));
-  };
-
-  const handleImageRemove = (type) => {
-    setUploadedImages(prev => ({
-      ...prev,
-      [type]: null
-    }));
-  };
-
-  const handleContinue = async () => {
-    if (!canContinue) return;
-    
-    setIsProcessing(true);
-    
-    try {
-      // Подготавливаем данные для генерации
-      const tryOnData = {
-        personImage: uploadedImages.person,
-        clothingImage: uploadedImages.clothing,
-        garmentDescription: garmentDescription || 'stylish outfit',
-        timestamp: Date.now()
-      };
-
-      console.log('🚀 Starting try-on with data:', {
-        personImage: uploadedImages.person?.name,
-        clothingImage: uploadedImages.clothing?.name,
-        description: tryOnData.garmentDescription
-      });
-
-      // Передаем данные в ProcessingPage
-      onContinue(tryOnData);
-      
-    } catch (error) {
-      console.error('❌ Error preparing try-on data:', error);
-      setIsProcessing(false);
-      // Можно добавить toast уведомление об ошибке
+  const handleImageUpload = async (type, file) => {
+    if (file) {
+      try {
+        // Показываем состояние обработки
+        setProcessingStates(prev => ({ ...prev, [type]: true }));
+        
+        console.log(`🔄 Начинаю обработку ${type} изображения:`, file.name);
+        
+        // Конвертация HEIC если необходимо
+        let processedFile = await imageConverter.processImage(file);
+        
+        // Создаем превью
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImages(prev => ({
+            ...prev,
+            [type]: {
+              file: processedFile,
+              originalFile: file, // Сохраняем оригинальный файл
+              url: e.target.result,
+              name: processedFile.name,
+              isProcessed: processedFile !== file
+            }
+          }));
+          
+          // Скрываем состояние обработки
+          setProcessingStates(prev => ({ ...prev, [type]: false }));
+        };
+        
+        reader.readAsDataURL(processedFile);
+        
+      } catch (error) {
+        console.error(`❌ Ошибка обработки ${type} изображения:`, error);
+        
+        // В случае ошибки используем оригинальный файл
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImages(prev => ({
+            ...prev,
+            [type]: { 
+              file: file,
+              originalFile: file,
+              url: e.target.result,
+              name: file.name,
+              isProcessed: false
+            }
+          }));
+          
+          setProcessingStates(prev => ({ ...prev, [type]: false }));
+        };
+        reader.readAsDataURL(file);
+      }
     }
   };
 
-  const canContinue = uploadedImages.person && uploadedImages.clothing;
+  const handleFileSelect = (type, e) => {
+    const file = e.target.files[0];
+    handleImageUpload(type, file);
+  };
+
+  const handleDrop = (type, e) => {
+    e.preventDefault();
+    setDragStates(prev => ({ ...prev, [type]: false }));
+    const file = e.dataTransfer.files[0];
+    handleImageUpload(type, file);
+  };
+
+  const handleDragOver = (type, e) => {
+    e.preventDefault();
+    setDragStates(prev => ({ ...prev, [type]: true }));
+  };
+
+  const handleDragLeave = (type) => {
+    setDragStates(prev => ({ ...prev, [type]: false }));
+  };
+
+  const handleContinue = () => {
+    if (uploadedImages.person && uploadedImages.outfit) {
+      setIsProcessing(true);
+    }
+  };
+
+  const handleProcessingBack = () => {
+    setIsProcessing(false);
+  };
+
+  const handleProcessingComplete = (result) => {
+    onContinue(result);
+  };
+
+  const canContinue = uploadedImages.person && uploadedImages.outfit;
+
+  // Если идет обработка, показываем ProcessingPage
+  if (isProcessing) {
+    return (
+      <ProcessingPage
+        onBack={handleProcessingBack}
+        onComplete={handleProcessingComplete}
+        tryOnData={{
+          personImage: uploadedImages.person,
+          outfitImage: uploadedImages.outfit,
+          timestamp: Date.now()
+        }}
+      />
+    );
+  }
+
+  const UploadZone = ({ type, title, icon: IconComponent, placeholder }) => {
+    const isUploaded = uploadedImages[type];
+    const isDragOver = dragStates[type];
+    const isProcessing = processingStates[type];
+    
+    return (
+      <motion.div
+        className={`
+          relative w-full h-48 max-h-48 border-2 border-dashed rounded-xl
+          flex flex-col items-center justify-center cursor-pointer
+          transition-all duration-300
+          ${isDragOver 
+            ? 'border-blue-400 bg-blue-50' 
+            : isUploaded 
+              ? 'border-green-400 bg-green-50' 
+              : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+          }
+        `}
+        onDrop={(e) => handleDrop(type, e)}
+        onDragOver={(e) => handleDragOver(type, e)}
+        onDragLeave={() => handleDragLeave(type)}
+        onClick={() => !isProcessing && document.getElementById(`file-input-${type}`).click()}
+        whileHover={{ scale: isProcessing ? 1 : 1.01 }}
+        whileTap={{ scale: isProcessing ? 1 : 0.99 }}
+      >
+        {isProcessing ? (
+          <div className="flex flex-col items-center justify-center">
+            <motion.div
+              className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            />
+            <p className="text-blue-600 text-sm mt-3 font-medium">
+              Обрабатываю...
+            </p>
+          </div>
+        ) : isUploaded ? (
+          <div className="relative w-full h-full">
+            <img 
+              src={isUploaded.url} 
+              alt={`Uploaded ${type}`} 
+              className="w-full h-full object-contain rounded-lg bg-gray-50"
+            />
+            {/* Индикатор обработки */}
+            {isUploaded.isProcessed && (
+              <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                ✓ HEIC → JPG
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+              <div className="bg-white/90 px-3 py-2 rounded-full">
+                <span className="text-gray-800 text-xs sm:text-sm font-medium">Tap to change</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Upload Icon */}
+            <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full mb-3 sm:mb-4">
+              <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 -ml-1 sm:-ml-2 -mt-1 sm:-mt-2" />
+            </div>
+
+            {/* Upload Text */}
+            <h3 className="text-sm sm:text-lg font-medium text-gray-700 mb-1 sm:mb-2 text-center">
+              {title}
+            </h3>
+            <p className="text-gray-500 text-xs sm:text-sm text-center max-w-xs px-2">
+              {isDragOver 
+                ? 'Drop your image here' 
+                : placeholder
+              }
+            </p>
+          </>
+        )}
+
+        <input
+          id={`file-input-${type}`}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileSelect(type, e)}
+          className="hidden"
+          disabled={isProcessing}
+        />
+      </motion.div>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Custom scrollbar styles */}
-      <style>{`
-        .scrollable-content {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE and Edge */
-        }
-        .scrollable-content::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
-        }
-      `}</style>
-      
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
-        <div className="flex items-center justify-between px-4 py-4">
-          <button
-            onClick={onBack}
-            className="flex items-center text-white hover:text-gray-300 transition-colors"
-            disabled={isProcessing}
-          >
-            <ArrowLeft size={24} />
-          </button>
-          
-          <div className="text-center">
-            <h1 className="text-xl font-bold">Upload Photos</h1>
-            <p className="text-gray-400 text-sm">AI needs both photos to create magic</p>
-          </div>
-          
-          <div className="w-6" />
-        </div>
-        
-        {/* Progress indicator */}
-        <div className="px-4 pb-4">
-          <ProgressIndicator currentStep={1} totalSteps={2} />
-        </div>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="scrollable-content pt-32 pb-32 px-4 max-h-screen overflow-y-auto">
-        <div className="max-w-md mx-auto space-y-8">
-          
-          {/* Your Photo Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <EnhancedUploadZone
-              type="person"
-              title="Your Photo"
-              subtitle="Step 1: Upload your photo"
-              placeholder="Take your selfie"
-              uploadedImage={uploadedImages.person}
-              onImageUpload={handleImageUpload}
-              onImageRemove={handleImageRemove}
-              disabled={isProcessing}
-            />
-          </motion.div>
-
-          {/* Tips for person photos */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <TipsPanel type="person" />
-          </motion.div>
-
-          {/* Connection Animation */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="flex flex-col items-center py-8"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <Sparkles className="w-5 h-5 text-green-400" />
-              <span className="text-gray-300 font-medium">AI combines both</span>
-              <Sparkles className="w-5 h-5 text-orange-400" />
-            </div>
-            
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <ArrowDown className="w-6 h-6 text-gray-400" />
-            </motion.div>
-          </motion.div>
-
-          {/* Clothing Item Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <EnhancedUploadZone
-              type="clothing"
-              title="Clothing Item"
-              subtitle="Step 2: Choose outfit to try"
-              placeholder="Choose outfit to try"
-              uploadedImage={uploadedImages.clothing}
-              onImageUpload={handleImageUpload}
-              onImageRemove={handleImageRemove}
-              disabled={isProcessing}
-            />
-          </motion.div>
-
-          {/* Tips for clothing photos */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <TipsPanel type="clothing" />
-          </motion.div>
-
-          {/* Garment Description Input */}
-          {canContinue && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="space-y-3"
-            >
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <h3 className="text-white font-medium">Describe the style (optional)</h3>
-              </div>
-              <input
-                type="text"
-                value={garmentDescription}
-                onChange={(e) => setGarmentDescription(e.target.value)}
-                placeholder="e.g., elegant evening wear, casual summer outfit, business attire"
-                className="w-full px-4 py-3 rounded-2xl bg-gray-800/50 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 transition-colors"
-                disabled={isProcessing}
-              />
-              <p className="text-gray-500 text-sm">
-                Help AI understand the style you want to achieve
-              </p>
-            </motion.div>
-          )}
-
-          {/* Browse Catalog Option */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <button 
-              className="w-full p-6 border border-gray-700 rounded-2xl bg-gray-900/30 hover:bg-gray-800/50 transition-all duration-300 group"
-              disabled={isProcessing}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 rounded-xl bg-purple-500/20 group-hover:bg-purple-500/30 transition-colors">
-                    <span className="text-2xl">🛍️</span>
-                  </div>
-                  <div className="text-left">
-                    <h3 className="text-white font-medium">Browse Our Catalog</h3>
-                    <p className="text-gray-400 text-sm">Choose from thousands of items</p>
-                  </div>
-                </div>
-                <ArrowLeft className="w-5 h-5 text-gray-400 rotate-180 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-          </motion.div>
-
-          {/* AI Processing Info */}
-          {canContinue && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
-              className="bg-gradient-to-r from-green-500/10 to-purple-500/10 border border-green-500/20 rounded-2xl p-4"
-            >
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-green-400" />
-                </div>
-                <h3 className="text-white font-medium">AI Processing Info</h3>
-              </div>
-              <div className="space-y-2 text-sm text-gray-300">
-                <p>• Advanced neural networks will analyze both images</p>
-                <p>• Generation typically takes 30-60 seconds</p>
-                <p>• Multiple style variations will be created</p>
-                <p>• High-quality 1024x1024 resolution output</p>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Spacing for fixed button */}
-          <div className="h-20" />
-        </div>
-      </div>
-
-      {/* Fixed Continue Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/90 to-transparent">
-        <motion.button
-          onClick={handleContinue}
-          disabled={!canContinue || isProcessing}
-          className={`
-            w-full py-4 px-6 rounded-2xl font-semibold text-lg transition-all duration-300
-            ${canContinue && !isProcessing
-              ? 'bg-green-500 hover:bg-green-600 text-black shadow-lg shadow-green-500/25 hover:shadow-green-500/40'
-              : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            }
-          `}
-          whileHover={canContinue && !isProcessing ? { scale: 1.02 } : {}}
-          whileTap={canContinue && !isProcessing ? { scale: 0.98 } : {}}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
+      <div className="flex items-center px-4 sm:px-6 py-4 border-b border-gray-100">
+        <button
+          onClick={onBack}
+          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors p-1"
         >
-          {isProcessing ? (
-            <div className="flex items-center justify-center space-x-2">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
-              />
-              <span>Preparing...</span>
-            </div>
-          ) : (
-            <>
-              Start AI Generation
-              {canContinue && (
-                <motion.span
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="ml-2"
-                >
-                  →
-                </motion.span>
-              )}
-            </>
-          )}
-        </motion.button>
+          <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+        </button>
         
-        {!canContinue && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="text-center text-gray-500 text-sm mt-3"
+        <div className="flex-1 text-center px-4">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight">
+            Upload Outfit Image to Try On
+          </h1>
+        </div>
+        
+        <div className="w-5 sm:w-6" />
+      </div>
+
+      <div className="max-w-xs sm:max-w-sm mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Upload Zones */}
+        <div className="space-y-6 sm:space-y-8 mb-8">
+          {/* Person Photo Upload */}
+          <div>
+            <div className="flex items-center mb-3 sm:mb-4">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                <span className="text-blue-600 font-semibold text-sm sm:text-base">1</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Your Photo</h2>
+            </div>
+            <UploadZone 
+              type="person"
+              title="Upload Your Photo"
+              icon={User}
+              placeholder="Take a selfie or upload from gallery"
+            />
+          </div>
+
+          {/* Outfit Photo Upload */}
+          <div>
+            <div className="flex items-center mb-3 sm:mb-4">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                <span className="text-orange-600 font-semibold text-sm sm:text-base">2</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900">Outfit to Try</h2>
+            </div>
+            <UploadZone 
+              type="outfit"
+              title="Upload Outfit Image"
+              icon={Shirt}
+              placeholder="Upload clothing item or outfit"
+            />
+          </div>
+        </div>
+
+        {/* Examples Section */}
+        <div className="mb-8">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Examples</h2>
+          
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            {/* Model Photo */}
+            <motion.div 
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="relative mb-2 sm:mb-3">
+                <img 
+                  src="/assets/images/modelphoto.png" 
+                  alt="Model Photo" 
+                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                />
+              </div>
+              <div className="flex items-center justify-center mb-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Model Photo</span>
+              </div>
+            </motion.div>
+
+            {/* Combination */}
+            <motion.div 
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="relative mb-2 sm:mb-3">
+                <img 
+                  src="/assets/images/combination.png" 
+                  alt="Combination" 
+                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                />
+              </div>
+              <div className="flex items-center justify-center mb-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Combination</span>
+              </div>
+            </motion.div>
+
+            {/* Single Item */}
+            <motion.div 
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="relative mb-2 sm:mb-3">
+                <img 
+                  src="/assets/images/singleitem.png" 
+                  alt="Single Item" 
+                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                />
+              </div>
+              <div className="flex items-center justify-center mb-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+                </div>
+                <span className="text-xs sm:text-sm font-medium text-gray-700">Single Item</span>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Continue Button */}
+        {canContinue && (
+          <motion.button
+            onClick={handleContinue}
+            className="w-full py-3 sm:py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-sm sm:text-base"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
+            Continue with these images
+          </motion.button>
+        )}
+
+        {/* Helper text */}
+        {!canContinue && (
+          <div className="text-center text-gray-500 text-xs sm:text-sm mt-4">
             Upload both photos to continue
-          </motion.p>
+          </div>
         )}
       </div>
     </div>
