@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './index.css';
-import OnboardingPage from './components/OnboardingPage';
+// import OnboardingPage from './components/OnboardingPage'; // Removed onboarding page
 import HomePage from './components/HomePage';
 import UploadPage from './components/UploadPage';
 import ProcessingPage from './components/ProcessingPage';
 import ResultPage from './components/ResultPage';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('onboarding'); // onboarding, home, upload, processing, result
+  const [currentPage, setCurrentPage] = useState('home'); // home, upload, processing, result
   const [tryOnData, setTryOnData] = useState(null); // Данные для генерации
   const [resultData, setResultData] = useState(null); // Результаты генерации
 
@@ -110,13 +110,6 @@ function App() {
   // Рендер текущей страницы
   const renderCurrentPage = () => {
     switch (currentPage) {
-      case 'onboarding':
-        return (
-          <OnboardingPage
-            onGetStarted={() => handleNavigation('home')}
-          />
-        );
-
       case 'home':
         return (
           <HomePage
@@ -180,35 +173,6 @@ function App() {
           {renderCurrentPage()}
         </motion.div>
       </AnimatePresence>
-
-      {/* Debug info - только в development режиме */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed bottom-4 left-4 z-50 bg-black/80 backdrop-blur-sm rounded-lg p-3 text-xs font-mono border border-gray-700">
-          <div className="text-green-400">Page: {currentPage}</div>
-          <div className="text-blue-400">
-            Try-on data: {tryOnData ? '✓' : '✗'}
-          </div>
-          <div className="text-purple-400">
-            Result data: {resultData ? '✓' : '✗'}
-          </div>
-          {tryOnData && (
-            <div className="text-gray-400 mt-1">
-              Person: {tryOnData.personImage?.name?.slice(0, 10)}...
-              <br />
-              Clothing: {tryOnData.clothingImage?.name?.slice(0, 10)}...
-              <br />
-              Style: {tryOnData.garmentDescription?.slice(0, 15)}...
-            </div>
-          )}
-          {resultData && (
-            <div className="text-gray-400 mt-1">
-              Result: {resultData.status || 'unknown'}
-              <br />
-              ID: {resultData.id?.slice(0, 8)}...
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Global error boundary */}
       {/* Можно добавить ErrorBoundary компонент здесь */}

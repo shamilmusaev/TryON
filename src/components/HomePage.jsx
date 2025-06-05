@@ -5,6 +5,7 @@ import StatsCard from './StatsCard';
 import ActionGrid from './ActionGrid';
 import AIRecommendations from './AIRecommendations';
 import Navbar from './common/Navbar';
+import Logo from './common/Logo';
 import { mockRecommendations, mockStats, mockUserData } from '../types/home.types';
 
 const HomePage = ({ onStartProcessing, onNavigation }) => {
@@ -57,7 +58,10 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
         className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-lg border-b border-gray-700/50"
       >
         <div className="max-w-mobile mx-auto px-6 py-3">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Logo size="small" className="text-lg" />
+            
             <div className="flex items-center space-x-3">
               <motion.button
                 whileHover={{ scale: 1.05 }}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Download, Share2, ArrowLeft, Heart, ShoppingBag, Sparkles, MoreVertical } from 'lucide-react';
 import Navbar from './common/Navbar';
+import Logo from './common/Logo';
 
 const ResultPage = ({ onBack, onNavigation, resultData }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -279,14 +280,17 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
             className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent pt-12 pb-8"
           >
             <div className="flex items-center justify-between px-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onBack}
-                className="w-10 h-10 bg-black/50 backdrop-blur-xl rounded-full flex items-center justify-center text-white"
-              >
-                <ArrowLeft size={20} />
-              </motion.button>
+              <div className="flex items-center space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={onBack}
+                  className="w-10 h-10 bg-black/50 backdrop-blur-xl rounded-full flex items-center justify-center text-white"
+                >
+                  <ArrowLeft size={20} />
+                </motion.button>
+                <Logo size="small" className="text-white" />
+              </div>
               
               <div className="text-center">
                 <h1 className="text-white font-bold text-lg">{currentImage.title}</h1>

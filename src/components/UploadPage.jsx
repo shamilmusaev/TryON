@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Camera, Plus, User, Shirt } from 'lucide-react';
 import ProcessingPage from './ProcessingPage';
+import Logo from './common/Logo';
 import imageConverter from '../services/imageConverter';
 
 const UploadPage = ({ onBack, onContinue, onNavigation }) => {
@@ -226,9 +227,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
         </button>
         
         <div className="flex-1 text-center px-4">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 leading-tight">
-            Upload Outfit Image to Try On
-          </h1>
+          <Logo size="small" className="text-gray-900" />
         </div>
         
         <div className="w-5 sm:w-6" />

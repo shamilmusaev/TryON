@@ -7,6 +7,17 @@ const Logo = ({ size = 'large', className = '' }) => {
     large: 'text-4xl md:text-5xl'
   };
 
+  // Определяем цвет подзаголовка на основе className
+  const isWhiteText = className.includes('text-white');
+  const isGrayText = className.includes('text-gray');
+  
+  let subtitleColor = 'text-white/80'; // по умолчанию
+  if (isGrayText) {
+    subtitleColor = 'text-gray-600';
+  } else if (isWhiteText) {
+    subtitleColor = 'text-white/80';
+  }
+
   return (
     <motion.div 
       className={`font-bold ${sizeClasses[size]} ${className}`}
@@ -31,7 +42,7 @@ const Logo = ({ size = 'large', className = '' }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="text-white/80 text-sm md:text-base font-normal mt-1"
+        className={`${subtitleColor} text-sm md:text-base font-normal mt-1`}
       >
         AI Fashion Studio
       </motion.div>
