@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Camera, Plus, User, Shirt } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Plus, User, Shirt } from 'lucide-react';
 import ProcessingPage from './ProcessingPage';
 import Logo from './common/Logo';
 import imageConverter from '../services/imageConverter';
@@ -282,7 +282,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
               <div className="relative mb-2 sm:mb-3">
                 <img 
                   src="/assets/images/modelphoto.png" 
-                  alt="Model Photo" 
+                  alt="Model" 
                   className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
                 />
               </div>

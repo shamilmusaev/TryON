@@ -13,7 +13,6 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [showBlurAnimation, setShowBlurAnimation] = useState(false);
   const [lowResBlurImage, setLowResBlurImage] = useState(null);
   
   // Refs для anime.js
@@ -142,7 +141,6 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
       setProgress(0);
       setProcessingStatus('starting');
       setIsCompleted(false);
-      setShowBlurAnimation(false);
       
       // Используем оптимизированные изображения (уже обработанные оптимизатором iPhone)
       const generation = await replicateService.generateTryOn(
@@ -183,7 +181,6 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
     setProgress(0);
     setProcessingStatus('starting');
     setIsCompleted(false);
-    setShowBlurAnimation(false);
     
     // Имитируем ID генерации
     setPredictionId('mock-prediction-' + Date.now());
@@ -237,7 +234,6 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
     setGeneratedImage(null);
     setPredictionId(null);
     setIsCompleted(false);
-    setShowBlurAnimation(false);
     
     setTimeout(() => {
       setIsRetrying(false);
