@@ -439,7 +439,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
       <div className="flex-1 flex items-center justify-center p-3 sm:p-4">
         <motion.div
           ref={containerRef}
-          className="relative w-[280px] h-[280px] sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+          className="relative w-[300px] h-[400px] sm:w-[340px] sm:h-[450px] md:w-[380px] md:h-[500px] rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}

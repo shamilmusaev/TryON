@@ -3,12 +3,14 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { ChevronLeft, ChevronRight, Download, Share2, ArrowLeft, Heart, ShoppingBag, Sparkles, MoreVertical } from 'lucide-react';
 import Navbar from './common/Navbar';
 import Logo from './common/Logo';
+import FullscreenImageViewer from './FullscreenImageViewer';
 
 const ResultPage = ({ onBack, onNavigation, resultData }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isUIVisible, setIsUIVisible] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showToast, setShowToast] = useState(null);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-5, 0, 5]);
@@ -87,8 +89,12 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
     return () => clearTimeout(timer);
   }, [currentImageIndex]);
 
-  // Toggle UI visibility on tap
+  // Toggle UI visibility on tap or open fullscreen
   const handleImageTap = () => {
+    setIsFullscreenOpen(true);
+  };
+
+  const handleBackgroundTap = () => {
     setIsUIVisible(!isUIVisible);
   };
 
@@ -176,7 +182,7 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
       {/* Main Image Container */}
       <motion.div
         className="absolute inset-0 flex items-center justify-center px-4"
-        onClick={handleImageTap}
+        onClick={handleBackgroundTap}
       >
         <motion.div
           drag="x"
@@ -193,11 +199,15 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               key={currentImageIndex}
               src={currentImage.url}
               alt={currentImage.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover cursor-pointer"
               initial={{ scale: 1.1, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleImageTap();
+              }}
             />
           </AnimatePresence>
 
@@ -460,6 +470,16 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
           title=""
         />
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      <FullscreenImageViewer
+        isOpen={isFullscreenOpen}
+        onClose={() => setIsFullscreenOpen(false)}
+        imageUrl={currentImage.url}
+        title={currentImage.title}
+        onDownload={handleDownload}
+        onShare={handleShare}
+      />
     </div>
   );
 };
