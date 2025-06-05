@@ -331,6 +331,36 @@
     padding-right: env(safe-area-inset-right, 0);
   }
 
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* iPhone 14 Pro оптимизация */
+  @media screen and (max-width: 430px) {
+    .max-w-mobile {
+      max-width: 100%;
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    /* Улучшение кнопок для мобильных */
+    .btn-mobile {
+      min-height: 44px; /* iOS рекомендация */
+      touch-action: manipulation;
+    }
+  }
+
   /* Дополнительные утилиты для центрирования */
   .center-fixed {
     position: fixed;

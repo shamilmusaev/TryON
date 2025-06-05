@@ -14,9 +14,13 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [lowResBlurImage, setLowResBlurImage] = useState(null);
+  const [sliderPosition, setSliderPosition] = useState(50); // Позиция слайдера для сравнения (в процентах)
+  const [isDragging, setIsDragging] = useState(false);
   
-  // Refs для anime.js
+  // Refs для anime.js и slider
   const blurOverlayRef = useRef(null);
+  const containerRef = useRef(null);
+  const placeholderRef = useRef(null);
 
   // Отладочный лог для проверки данных
   useEffect(() => {
@@ -107,7 +111,56 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
     setIsCompleted(true);
   }, []);
 
-  // Запуск blur анимации привязанный к прогрессу генерации
+  // Функции для слайдера сравнения
+  const handleSliderMove = useCallback((clientX) => {
+    if (containerRef.current && generatedImage) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+      setSliderPosition(percentage);
+    }
+  }, [generatedImage]);
+
+  const handleMouseDown = useCallback(() => {
+    if (generatedImage) {
+      setIsDragging(true);
+    }
+  }, [generatedImage]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (isDragging) {
+      handleSliderMove(e.clientX);
+    }
+  }, [isDragging, handleSliderMove]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchMove = useCallback((e) => {
+    if (isDragging && e.touches.length > 0) {
+      handleSliderMove(e.touches[0].clientX);
+    }
+  }, [isDragging, handleSliderMove]);
+
+  // Event listeners для слайдера
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove);
+      document.addEventListener('touchend', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
+
+  // Запуск blur анимации и движения placeholder
   useEffect(() => {
     if (blurOverlayRef.current && isGenerating && !isCompleted) {
       console.log('🎬 Начинаю blur анимацию при старте генерации...');
@@ -116,19 +169,36 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
       blurOverlayRef.current.style.transform = 'translateY(0%)';
       blurOverlayRef.current.style.display = 'block';
     }
-  }, [isGenerating, isCompleted]); // Запускается при начале генерации
 
-  // Обновляем позицию blur overlay в зависимости от прогресса
+    // Анимация движения placeholder под blur
+    if (placeholderRef.current && isGenerating && !isCompleted) {
+      anime({
+        targets: placeholderRef.current,
+        scale: [1, 1.05, 1],
+        rotate: [0, 2, -2, 0],
+        duration: 3000,
+        easing: 'easeInOutSine',
+        loop: true
+      });
+    }
+  }, [isGenerating, isCompleted]);
+
+  // Обновляем позицию blur overlay с плавными переходами
   useEffect(() => {
     if (blurOverlayRef.current && isGenerating && progress > 0 && !isCompleted) {
-      // Рассчитываем позицию blur overlay на основе прогресса (0-100%)
-      // 0% прогресса = 0% движения, 90% прогресса = 90% движения (оставляем 10% для быстрого завершения)
-      const blurPosition = Math.min(progress * 0.9, 90); // Ограничиваем до 90%
+      // Более плавное движение blur с easing
+      const blurPosition = Math.min(progress * 0.85, 85); // Ограничиваем до 85%
       
-      // Применяем позицию напрямую через transform
-      blurOverlayRef.current.style.transform = `translateY(${blurPosition}%)`;
-      
-      console.log(`🎬 Blur позиция обновлена: ${blurPosition}% (прогресс генерации: ${progress}%)`);
+      // Используем anime.js для плавного перехода
+      anime({
+        targets: blurOverlayRef.current,
+        translateY: `${blurPosition}%`,
+        duration: 800, // Более быстрые переходы
+        easing: 'easeOutQuart', // Плавное замедление
+        complete: () => {
+          console.log(`🎬 Blur позиция обновлена: ${blurPosition}% (прогресс генерации: ${progress}%)`);
+        }
+      });
     }
   }, [progress, isGenerating, isCompleted]);
 
@@ -281,41 +351,43 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
-      {/* Логотип в центре сверху */}
-      <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-30">
+    <div className="min-h-screen bg-white flex flex-col relative safe-area-inset">
+      {/* Логотип в центре сверху - адаптирован для мобильных */}
+      <div className="absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 z-30 pt-safe">
         <Logo size="small" className="text-gray-900" />
       </div>
 
-      {/* Кнопки управления - абсолютно позиционированы чтобы не влиять на layout */}
+      {/* Кнопки управления - адаптированы для мобильных */}
       {showControls && (
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.5 }}
-          className="absolute top-6 left-0 right-0 z-30 flex justify-center gap-4"
+          className="absolute bottom-20 sm:top-6 left-0 right-0 z-30 flex justify-center gap-3 sm:gap-4 px-4"
         >
           {/* Кнопка назад */}
           <motion.button
             onClick={onBack}
-            className="flex items-center gap-3 px-6 py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-xl border border-gray-200 transition-all duration-200 shadow-sm hover:shadow-md text-sm sm:text-base"
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
           >
-            <ArrowLeft size={18} />
-            <span>Back to Upload</span>
+            <ArrowLeft size={16} className="sm:w-[18px] sm:h-[18px]" />
+            <span className="hidden sm:inline">Back to Upload</span>
+            <span className="sm:hidden">Back</span>
           </motion.button>
 
           {/* Кнопка повтора */}
           <motion.button
             onClick={handleRetry}
             disabled={isRetrying}
-            className="flex items-center gap-3 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
           >
-            <RotateCcw size={18} className={isRetrying ? 'animate-spin' : ''} />
-            <span>{isRetrying ? 'Retrying...' : 'Try Again'}</span>
+            <RotateCcw size={16} className={`sm:w-[18px] sm:h-[18px] ${isRetrying ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{isRetrying ? 'Retrying...' : 'Try Again'}</span>
+            <span className="sm:hidden">{isRetrying ? 'Retry...' : 'Retry'}</span>
           </motion.button>
         </motion.div>
       )}
@@ -363,16 +435,17 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
         </motion.div>
       )}
 
-      {/* Центральный квадрат - всегда в центре экрана */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      {/* Центральный контейнер - оптимизирован для мобильных */}
+      <div className="flex-1 flex items-center justify-center p-3 sm:p-4">
         <motion.div
-          className="relative w-80 h-80 sm:w-96 sm:h-96 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+          ref={containerRef}
+          className="relative w-[280px] h-[280px] sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Плейсхолдер - заблюренное превью */}
-          <div className="absolute inset-0">
+          {/* Плейсхолдер с анимацией - заблюренное превью */}
+          <div ref={placeholderRef} className="absolute inset-0">
             {/* Заблюренное превью - всегда показано когда есть */}
             {lowResBlurImage && (
               <img
@@ -402,20 +475,69 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
             />
           )}
 
-          {/* Сгенерированное изображение - плавно появляется поверх плейсхолдера */}
+          {/* Сгенерированное изображение с слайдером сравнения */}
           {generatedImage && (
-            <motion.div
-              className="absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              <img
-                src={generatedImage}
-                alt="Generated outfit"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
+            <>
+              {/* Слой с оригинальным изображением */}
+              <motion.div
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                {lowResBlurImage && (
+                  <img
+                    src={tryOnData.personImage.url}
+                    alt="Original"
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </motion.div>
+
+              {/* Слой с сгенерированным изображением - обрезается по слайдеру */}
+              <motion.div
+                className="absolute inset-0 overflow-hidden"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                style={{
+                  clipPath: `polygon(${sliderPosition}% 0%, 100% 0%, 100% 100%, ${sliderPosition}% 100%)`
+                }}
+              >
+                <img
+                  src={generatedImage}
+                  alt="Generated outfit"
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
+
+              {/* Линия слайдера */}
+              <motion.div
+                className="absolute top-0 bottom-0 w-1 bg-white shadow-lg cursor-ew-resize z-20"
+                style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1, duration: 0.5 }}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleMouseDown}
+              >
+                {/* Кружок на линии */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center cursor-ew-resize">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <div className="w-1 h-4 bg-gray-400 rounded-full mx-0.5"></div>
+                    <div className="w-1 h-4 bg-gray-400 rounded-full mx-0.5"></div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Текстовые метки */}
+              <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                Before
+              </div>
+              <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                After
+              </div>
+            </>
           )}
 
           {/* Blur overlay для ChatGPT-анимации - показывается во время генерации */}
@@ -453,9 +575,9 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
         </motion.div>
       </div>
 
-      {/* Минимальный текст статуса снизу - фиксированная высота чтобы не подпрыгивало */}
-      <div className="text-center p-6">
-        <div className="h-6 flex items-center justify-center"> {/* Фиксированная высота */}
+      {/* Минимальный текст статуса снизу - адаптирован для мобильных */}
+      <div className="text-center p-4 sm:p-6 pb-safe">
+        <div className="h-5 sm:h-6 flex items-center justify-center"> {/* Фиксированная высота */}
           <AnimatePresence mode="wait">
             {processingStatus === 'starting' && (
               <motion.p

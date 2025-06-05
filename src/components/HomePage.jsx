@@ -55,9 +55,9 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-lg border-b border-gray-700/50"
+        className="fixed top-0 left-0 right-0 z-50 bg-gray-900/90 backdrop-blur-lg border-b border-gray-700/50 safe-area-top"
       >
-        <div className="max-w-mobile mx-auto px-6 py-3">
+        <div className="max-w-mobile mx-auto px-4 py-2 pt-safe">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Logo size="small" className="text-lg" />
@@ -102,10 +102,10 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
       </motion.div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden pt-16"
-        style={{ paddingTop: '4rem' }}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pt-20 pb-safe"
+        style={{ paddingTop: '5rem' }}
       >
-        <div className="max-w-mobile mx-auto px-6 py-8 w-full">
+        <div className="max-w-mobile mx-auto px-4 py-4 w-full">
           {/* Greeting */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -113,7 +113,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="mb-8"
           >
-            <h1 className="text-white text-3xl font-bold mb-2">
+            <h1 className="text-white text-2xl sm:text-3xl font-bold mb-2">
               {currentTime}, {mockUserData.name}! 
               <motion.span
                 animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
@@ -123,7 +123,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
                 ✨
               </motion.span>
             </h1>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-base sm:text-lg">
               Ready for your fashion experiment?
             </p>
           </motion.div>

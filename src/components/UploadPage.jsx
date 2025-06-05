@@ -135,7 +135,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
     return (
       <motion.div
         className={`
-          relative w-full h-48 max-h-48 border-2 border-dashed rounded-xl
+          relative w-full h-36 sm:h-48 max-h-48 border-2 border-dashed rounded-xl
           flex flex-col items-center justify-center cursor-pointer
           transition-all duration-300
           ${isDragOver 
@@ -185,16 +185,16 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
         ) : (
           <>
             {/* Upload Icon */}
-            <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full mb-3 sm:mb-4">
-              <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" />
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 -ml-1 sm:-ml-2 -mt-1 sm:-mt-2" />
+            <div className="flex items-center justify-center w-10 h-10 sm:w-16 sm:h-16 bg-gray-200 rounded-full mb-2 sm:mb-4">
+              <IconComponent className="w-5 h-5 sm:w-8 sm:h-8 text-gray-500" />
+              <Plus className="w-2 h-2 sm:w-4 sm:h-4 text-gray-500 -ml-1 sm:-ml-2 -mt-1 sm:-mt-2" />
             </div>
 
             {/* Upload Text */}
-            <h3 className="text-sm sm:text-lg font-medium text-gray-700 mb-1 sm:mb-2 text-center">
+            <h3 className="text-xs sm:text-lg font-medium text-gray-700 mb-1 sm:mb-2 text-center">
               {title}
             </h3>
-            <p className="text-gray-500 text-xs sm:text-sm text-center max-w-xs px-2">
+            <p className="text-gray-500 text-xs sm:text-sm text-center max-w-xs px-2 leading-tight">
               {isDragOver 
                 ? 'Drop your image here' 
                 : placeholder
@@ -216,24 +216,24 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="flex items-center px-4 sm:px-6 py-4 border-b border-gray-100">
+    <div className="min-h-screen bg-white safe-area-inset">
+      {/* Header - адаптирован для мобильных */}
+      <div className="flex items-center px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-100 pt-safe">
         <button
           onClick={onBack}
-          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors p-1"
+          className="flex items-center text-gray-600 hover:text-gray-800 transition-colors p-1 btn-mobile"
         >
-          <ArrowLeft size={20} className="sm:w-6 sm:h-6" />
+          <ArrowLeft size={18} className="sm:w-6 sm:h-6" />
         </button>
         
-        <div className="flex-1 text-center px-4">
+        <div className="flex-1 text-center px-2 sm:px-4">
           <Logo size="small" className="text-gray-900" />
         </div>
         
         <div className="w-5 sm:w-6" />
       </div>
 
-      <div className="max-w-xs sm:max-w-sm mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <div className="max-w-[320px] sm:max-w-sm mx-auto px-3 sm:px-6 py-4 sm:py-8 pb-safe">
         {/* Upload Zones */}
         <div className="space-y-6 sm:space-y-8 mb-8">
           {/* Person Photo Upload */}
@@ -270,27 +270,27 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
         </div>
 
         {/* Examples Section */}
-        <div className="mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Examples</h2>
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-6">Examples</h2>
           
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             {/* Model Photo */}
             <motion.div 
               className="text-center"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="relative mb-2 sm:mb-3">
+              <div className="relative mb-1 sm:mb-3">
                 <img 
                   src="/assets/images/modelphoto.png" 
                   alt="Model" 
-                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                  className="w-full h-16 sm:h-28 object-contain bg-gray-50 rounded-lg"
                 />
               </div>
-              <div className="flex items-center justify-center mb-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+              <div className="flex items-center justify-center mb-1 sm:mb-2">
+                <div className="w-2 h-2 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1 h-1 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Model Photo</span>
+                <span className="text-[10px] sm:text-sm font-medium text-gray-700">Model Photo</span>
               </div>
             </motion.div>
 
@@ -299,18 +299,18 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
               className="text-center"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="relative mb-2 sm:mb-3">
+              <div className="relative mb-1 sm:mb-3">
                 <img 
                   src="/assets/images/combination.png" 
                   alt="Combination" 
-                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                  className="w-full h-16 sm:h-28 object-contain bg-gray-50 rounded-lg"
                 />
               </div>
-              <div className="flex items-center justify-center mb-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+              <div className="flex items-center justify-center mb-1 sm:mb-2">
+                <div className="w-2 h-2 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1 h-1 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Combination</span>
+                <span className="text-[10px] sm:text-sm font-medium text-gray-700">Combination</span>
               </div>
             </motion.div>
 
@@ -319,18 +319,18 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
               className="text-center"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="relative mb-2 sm:mb-3">
+              <div className="relative mb-1 sm:mb-3">
                 <img 
                   src="/assets/images/singleitem.png" 
                   alt="Single Item" 
-                  className="w-full h-20 sm:h-28 object-contain bg-gray-50 rounded-lg"
+                  className="w-full h-16 sm:h-28 object-contain bg-gray-50 rounded-lg"
                 />
               </div>
-              <div className="flex items-center justify-center mb-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
-                  <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full"></div>
+              <div className="flex items-center justify-center mb-1 sm:mb-2">
+                <div className="w-2 h-2 sm:w-4 sm:h-4 bg-green-500 rounded-full flex items-center justify-center mr-1 sm:mr-2">
+                  <div className="w-1 h-1 sm:w-2 sm:h-2 bg-white rounded-full"></div>
                 </div>
-                <span className="text-xs sm:text-sm font-medium text-gray-700">Single Item</span>
+                <span className="text-[10px] sm:text-sm font-medium text-gray-700">Single Item</span>
               </div>
             </motion.div>
           </div>
