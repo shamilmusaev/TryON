@@ -110,23 +110,26 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50"
           onClick={() => setShowGuideModal(false)}
         >
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-sm w-full mx-4 overflow-hidden"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 500 }}
+            className="bg-white rounded-t-3xl w-full max-h-[85vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100">
+            <div className="px-4 py-4 border-b border-gray-100">
+              {/* Drag indicator */}
+              <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-gray-900">Гайд по фотосъемке</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Гайд по фотосъемке</h2>
                 <button 
                   onClick={() => setShowGuideModal(false)}
-                  className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+                  className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
                 >
                   <X size={18} className="text-gray-600" />
                 </button>
@@ -134,7 +137,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
             </div>
 
             {/* Modal Content */}
-            <div className="px-6 py-6">
+            <div className="px-4 py-4 overflow-y-auto max-h-[calc(85vh-80px)]">
               <div className="space-y-6">
                 {/* Фото человека */}
                 <div>
@@ -215,178 +218,188 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
-          <div className="px-6 py-4 bg-white">
+    <div className="min-h-screen bg-gray-100">
+      {/* Safe area для iPhone 14 Pro с Dynamic Island */}
+      <div className="pt-safe-top pb-safe-bottom">
+        <div className="flex flex-col h-screen">
+          {/* Header с учетом Dynamic Island */}
+          <div className="px-4 py-3 bg-white mt-2">
             <div className="flex items-center justify-between">
               <button 
                 onClick={onBack}
-                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+                className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
               >
-                <X size={18} className="text-gray-600" />
+                <X size={20} className="text-gray-600" />
               </button>
               
-              <h1 className="text-xl font-semibold text-gray-900">Clothing Pairing</h1>
+              <h1 className="text-lg font-semibold text-gray-900">Clothing Pairing</h1>
               
               <button 
                 onClick={() => setShowGuideModal(true)}
-                className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"
+                className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
               >
-                <HelpCircle size={18} className="text-gray-600" />
+                <HelpCircle size={20} className="text-gray-600" />
               </button>
             </div>
           </div>
 
-          {/* Your Photo Section */}
-          <div className="px-6 pb-4">
-            {uploadedPersonPhoto ? (
-              <div className="relative">
-                <img 
-                  src={uploadedPersonPhoto.url} 
-                  alt="Your photo" 
-                  className="w-full h-48 object-contain rounded-xl mb-4 bg-gray-50"
-                />
-                {/* Индикатор обработки HEIC */}
-                {uploadedPersonPhoto.isProcessed && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                    ✓ HEIC → JPG
-                  </div>
-                )}
-                <div className="text-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Photo</h2>
-                </div>
-                <button
-                  onClick={() => document.getElementById('person-upload').click()}
-                  className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors"
-                  disabled={processingStates.person}
-                >
-                  {processingStates.person ? 'Обрабатываю...' : 'Change photo'}
-                </button>
-              </div>
-            ) : (
-              <div>
-                <div className="text-center mb-6">
-                  <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    {processingStates.person ? (
-                      <motion.div
-                        className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto px-4 py-2">
+            <div className="w-full max-w-sm mx-auto space-y-4">
+              {/* Your Photo Section */}
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="px-4 py-4">
+                  {uploadedPersonPhoto ? (
+                    <div className="relative">
+                      <img 
+                        src={uploadedPersonPhoto.url} 
+                        alt="Your photo" 
+                        className="w-full h-40 object-contain rounded-xl mb-3 bg-gray-50"
                       />
-                    ) : (
-                      <User size={36} className="text-gray-400" />
-                    )}
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Your Photo</h2>
-                  <p className="text-gray-500 text-sm">Take a selfie or upload from gallery</p>
-                </div>
+                      {/* Индикатор обработки HEIC */}
+                      {uploadedPersonPhoto.isProcessed && (
+                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                          ✓ HEIC → JPG
+                        </div>
+                      )}
+                      <div className="text-center mb-3">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Photo</h2>
+                      </div>
+                      <button
+                        onClick={() => document.getElementById('person-upload').click()}
+                        className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
+                        disabled={processingStates.person}
+                      >
+                        {processingStates.person ? 'Обрабатываю...' : 'Change photo'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-center mb-4">
+                        <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                          {processingStates.person ? (
+                            <motion.div
+                              className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          ) : (
+                            <User size={32} className="text-gray-400" />
+                          )}
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Photo</h2>
+                        <p className="text-gray-500 text-sm">Take a selfie or upload from gallery</p>
+                      </div>
 
-                <button
-                  onClick={() => document.getElementById('person-upload').click()}
-                  className="w-full py-6 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors font-medium"
-                  disabled={processingStates.person}
-                >
-                  {processingStates.person ? 'Обрабатываю...' : 'Tap to upload photo'}
-                </button>
-              </div>
-            )}
-
-            <input
-              id="person-upload"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handlePhotoUpload('person', e)}
-              className="hidden"
-              disabled={processingStates.person}
-            />
-          </div>
-          
-          {/* Arrow pointing down */}
-          <div className="flex justify-center py-2">
-            <ChevronDown size={14} className="text-gray-400" />
-          </div>
-        </div>
-
-        {/* Upload Outfit Section */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mt-4">
-          <div className="px-6 py-6">
-            {uploadedOutfitPhoto ? (
-              <div className="text-center">
-                <div className="relative inline-block">
-                  <img 
-                    src={uploadedOutfitPhoto.url} 
-                    alt="Outfit" 
-                    className="w-32 h-32 object-contain rounded-xl mx-auto mb-4 bg-gray-50"
-                  />
-                  {/* Индикатор обработки HEIC */}
-                  {uploadedOutfitPhoto.isProcessed && (
-                    <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
-                      ✓
+                      <button
+                        onClick={() => document.getElementById('person-upload').click()}
+                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors font-medium touch-manipulation"
+                        disabled={processingStates.person}
+                      >
+                        {processingStates.person ? 'Обрабатываю...' : 'Tap to upload photo'}
+                      </button>
                     </div>
                   )}
-                </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">Upload Outfit Image</h2>
-                <p className="text-gray-500 text-sm mb-4">Choose clothing item or complete outfit to try on</p>
-                <button
-                  onClick={() => document.getElementById('outfit-upload').click()}
-                  className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors"
-                  disabled={processingStates.outfit}
-                >
-                  {processingStates.outfit ? 'Обрабатываю...' : 'Change outfit'}
-                </button>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-green-400 rounded-xl p-8 bg-green-50">
-                <div className="text-center">
-                  <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-4">
-                    {processingStates.outfit ? (
-                      <motion.div
-                        className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
-                    ) : (
-                      <Plus size={24} className="text-white" />
-                    )}
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Upload Outfit Image</h2>
-                  <p className="text-gray-500 text-sm mb-6">Choose clothing item or complete outfit to try on</p>
-                  <button
-                    onClick={() => document.getElementById('outfit-upload').click()}
-                    className="w-full py-4 bg-white border border-green-400 rounded-xl text-green-600 font-medium hover:bg-green-50 transition-colors"
-                    disabled={processingStates.outfit}
-                  >
-                    {processingStates.outfit ? 'Обрабатываю...' : 'Choose from gallery'}
-                  </button>
-                </div>
-              </div>
-            )}
 
-            <input
-              id="outfit-upload"
-              type="file"
-              accept="image/*"
-              onChange={(e) => handlePhotoUpload('outfit', e)}
-              className="hidden"
-              disabled={processingStates.outfit}
-            />
+                  <input
+                    id="person-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload('person', e)}
+                    className="hidden"
+                    disabled={processingStates.person}
+                  />
+                </div>
+              </div>
+              
+              {/* Arrow pointing down */}
+              <div className="flex justify-center py-1">
+                <ChevronDown size={16} className="text-gray-400" />
+              </div>
+
+              {/* Upload Outfit Section */}
+              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div className="px-4 py-4">
+                  {uploadedOutfitPhoto ? (
+                    <div className="text-center">
+                      <div className="relative inline-block">
+                        <img 
+                          src={uploadedOutfitPhoto.url} 
+                          alt="Outfit" 
+                          className="w-28 h-28 object-contain rounded-xl mx-auto mb-3 bg-gray-50"
+                        />
+                        {/* Индикатор обработки HEIC */}
+                        {uploadedOutfitPhoto.isProcessed && (
+                          <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
+                            ✓
+                          </div>
+                        )}
+                      </div>
+                      <h2 className="text-lg font-semibold text-gray-900 mb-1">Upload Outfit Image</h2>
+                      <p className="text-gray-500 text-sm mb-3">Choose clothing item or complete outfit to try on</p>
+                      <button
+                        onClick={() => document.getElementById('outfit-upload').click()}
+                        className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
+                        disabled={processingStates.outfit}
+                      >
+                        {processingStates.outfit ? 'Обрабатываю...' : 'Change outfit'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-green-400 rounded-xl p-6 bg-green-50">
+                      <div className="text-center">
+                        <div className="w-14 h-14 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-3">
+                          {processingStates.outfit ? (
+                            <motion.div
+                              className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                          ) : (
+                            <Plus size={20} className="text-white" />
+                          )}
+                        </div>
+                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Upload Outfit Image</h2>
+                        <p className="text-gray-500 text-sm mb-4">Choose clothing item or complete outfit to try on</p>
+                        <button
+                          onClick={() => document.getElementById('outfit-upload').click()}
+                          className="w-full py-3 bg-white border border-green-400 rounded-xl text-green-600 font-medium hover:bg-green-50 transition-colors touch-manipulation"
+                          disabled={processingStates.outfit}
+                        >
+                          {processingStates.outfit ? 'Обрабатываю...' : 'Choose from gallery'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <input
+                    id="outfit-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handlePhotoUpload('outfit', e)}
+                    className="hidden"
+                    disabled={processingStates.outfit}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed bottom section with Next button */}
+          <div className="px-4 py-4 bg-white border-t border-gray-100">
+            <button
+              onClick={handleContinue}
+              disabled={!uploadedPersonPhoto || !uploadedOutfitPhoto || processingStates.person || processingStates.outfit}
+              className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all touch-manipulation ${
+                uploadedPersonPhoto && uploadedOutfitPhoto && !processingStates.person && !processingStates.outfit
+                  ? 'bg-gray-900 text-white hover:bg-gray-800' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Next
+            </button>
           </div>
         </div>
-
-        {/* Next Button */}
-        <button
-          onClick={handleContinue}
-          disabled={!uploadedPersonPhoto || !uploadedOutfitPhoto || processingStates.person || processingStates.outfit}
-          className={`w-full py-4 rounded-2xl font-semibold text-lg mt-6 transition-all ${
-            uploadedPersonPhoto && uploadedOutfitPhoto && !processingStates.person && !processingStates.outfit
-              ? 'bg-gray-900 text-white hover:bg-gray-800' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          Next
-        </button>
       </div>
 
       {/* Guide Modal */}

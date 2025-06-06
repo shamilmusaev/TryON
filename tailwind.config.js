@@ -17,6 +17,30 @@ module.exports = {
       height: {
         'mobile': '896px',
       },
+      padding: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
+      margin: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+      },
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
+        '88': '22rem',
+        '92': '23rem',
+        '100': '25rem',
+        '104': '26rem',
+        '108': '27rem',
+        '112': '28rem',
+      },
       backdropBlur: {
         'xs': '2px',
       },
@@ -39,7 +63,44 @@ module.exports = {
           '50%': { boxShadow: '0 0 20px #00ff88' },
         },
       },
+      screens: {
+        'iphone-14-pro': '393px',
+      },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      const newUtilities = {
+        '.touch-manipulation': {
+          'touch-action': 'manipulation',
+        },
+        '.pt-safe-top': {
+          'padding-top': 'env(safe-area-inset-top)',
+        },
+        '.pb-safe-bottom': {
+          'padding-bottom': 'env(safe-area-inset-bottom)',
+        },
+        '.pl-safe-left': {
+          'padding-left': 'env(safe-area-inset-left)',
+        },
+        '.pr-safe-right': {
+          'padding-right': 'env(safe-area-inset-right)',
+        },
+        '.mt-safe-top': {
+          'margin-top': 'env(safe-area-inset-top)',
+        },
+        '.mb-safe-bottom': {
+          'margin-bottom': 'env(safe-area-inset-bottom)',
+        },
+        '.ml-safe-left': {
+          'margin-left': 'env(safe-area-inset-left)',
+        },
+        '.mr-safe-right': {
+          'margin-right': 'env(safe-area-inset-right)',
+        },
+      }
+      
+      addUtilities(newUtilities, ['responsive', 'hover'])
+    }
+  ],
 } 

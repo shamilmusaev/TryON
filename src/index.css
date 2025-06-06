@@ -493,9 +493,210 @@
     left: 50%;
     transform: translateX(-50%);
   }
-}
 
-/* Hide scrollbar for webkit browsers */
-.overflow-x-auto::-webkit-scrollbar {
-  display: none;
+  /* Убираем горизонтальную полосу прокрутки */
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* iPhone 14 Pro специфичные стили */
+  .pt-safe-area {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pb-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pl-safe-area {
+    padding-left: env(safe-area-inset-left);
+  }
+  
+  .pr-safe-area {
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Высота с учетом Dynamic Island (iPhone 14 Pro) */
+  .h-screen-safe {
+    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+
+  /* Touch targets для iPhone 14 Pro (минимум 44px) */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Optimized text sizes для iPhone 14 Pro */
+  .text-iphone-sm {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .text-iphone-base {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .text-iphone-lg {
+    font-size: 18px;
+    line-height: 1.4;
+  }
+
+  /* Optimized spacing для iPhone 14 Pro */
+  .p-iphone {
+    padding: 16px;
+  }
+
+  .px-iphone {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .py-iphone {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  /* Улучшенный viewport для iPhone 14 Pro */
+  .viewport-height {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+
+  /* Prevent iOS zoom on form elements */
+  .ios-no-zoom {
+    font-size: 16px !important;
+    transform: scale(1);
+  }
+
+  /* iPhone 14 Pro optimized shadows */
+  .shadow-iphone {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .shadow-iphone-lg {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Optimized border radius для iPhone 14 Pro */
+  .rounded-iphone {
+    border-radius: 12px;
+  }
+
+  .rounded-iphone-lg {
+    border-radius: 16px;
+  }
+
+  .rounded-iphone-xl {
+    border-radius: 20px;
+  }
+
+  /* Disabled state optimizations */
+  .disabled-iphone {
+    opacity: 0.6;
+    pointer-events: none;
+    touch-action: none;
+  }
+
+  /* Loading state optimizations */
+  .loading-iphone {
+    pointer-events: none;
+    touch-action: none;
+  }
+
+  /* Backdrop blur optimizations для iPhone */
+  .backdrop-blur-iphone {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Modal optimizations для iPhone 14 Pro */
+  .modal-iphone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-content-iphone {
+    width: 100%;
+    max-height: 85vh;
+    background-color: white;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    overflow: hidden;
+  }
+
+  /* Scrollable content для модалок */
+  .scrollable-iphone {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(85vh - 80px);
+  }
+
+  /* Dynamic Island aware positioning */
+  .dynamic-island-margin {
+    margin-top: max(20px, env(safe-area-inset-top));
+  }
+
+  /* Enhanced touch feedback */
+  .touch-feedback {
+    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+  }
+
+  .touch-feedback:active {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+
+  /* Optimize for iPhone 14 Pro screen size (393px width) */
+  @media screen and (max-width: 430px) {
+    .container-iphone {
+      max-width: 393px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+
+    .grid-iphone {
+      display: grid;
+      gap: 12px;
+    }
+
+    .flex-iphone {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Compact spacing для iPhone */
+    .space-compact > * + * {
+      margin-top: 8px;
+    }
+
+    .space-normal > * + * {
+      margin-top: 12px;
+    }
+
+    .space-loose > * + * {
+      margin-top: 16px;
+    }
+  }
+
+  /* High DPI optimizations (iPhone 14 Pro = 460 PPI) */
+  @media (-webkit-min-device-pixel-ratio: 3) {
+    .crisp-edges {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+
+    .smooth-images {
+      image-rendering: -webkit-optimize-contrast;
+    }
+  }
 } 

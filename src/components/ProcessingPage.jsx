@@ -247,245 +247,250 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Логотип сверху */}
-      <div className="w-full px-6 py-4 bg-white">
-        <div className="flex justify-center">
-          <Logo size="medium" className="text-gray-800" />
-        </div>
-      </div>
-
-      {/* Главный контейнер для генерации - занимает всю верхнюю часть */}
-      <div className="flex-1 flex items-center justify-center p-4 relative" style={{ minHeight: 'calc(100vh - 280px)' }}>
-        {/* Превью одежды в маленьком окошке справа - только во время генерации */}
-        {isGenerating && tryOnData?.outfitImage?.url && (
-          <motion.div
-            initial={{ opacity: 0, x: 20, scale: 0.8 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 20, scale: 0.8 }}
-            className="absolute top-4 right-4 w-24 h-32 bg-white rounded-lg shadow-lg overflow-hidden border-2 border-gray-200 z-20"
-          >
-            <img
-              src={tryOnData.outfitImage.url}
-              alt="Outfit preview"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
-              Outfit
+    <div className="min-h-screen bg-gray-100">
+      {/* Safe area для iPhone 14 Pro */}
+      <div className="pt-safe-top pb-safe-bottom">
+        <div className="flex flex-col h-screen">
+          {/* Логотип сверху с учетом Dynamic Island */}
+          <div className="w-full px-4 py-3 bg-white mt-2">
+            <div className="flex justify-center">
+              <Logo size="medium" className="text-gray-800" />
             </div>
-          </motion.div>
-        )}
-
-        <motion.div
-          ref={containerRef}
-          className="relative w-full max-w-lg h-[60vh] rounded-2xl overflow-hidden shadow-2xl bg-white"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Плейсхолдер с анимацией - заблюренное превью */}
-          <div ref={placeholderRef} className="absolute inset-0">
-            {/* Заблюренное превью - всегда показано когда есть */}
-            {lowResBlurImage && (
-              <img
-                src={lowResBlurImage}
-                alt="Blurred preview"
-                className="w-full h-full object-cover"
-                style={{
-                  filter: 'blur(20px) brightness(1.1)',
-                }}
-              />
-            )}
-
-            {/* Fallback плейсхолдер если нет заблюренного превью */}
-            {!lowResBlurImage && (
-              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
-            )}
           </div>
 
-          {/* Градиентный оверлей для дополнительного размытия во время генерации */}
-          {isGenerating && (
-            <div 
-              className="absolute inset-0 z-5"
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(5px)',
-              }}
-            />
-          )}
+          {/* Главный контейнер для генерации */}
+          <div className="flex-1 flex items-center justify-center p-4 relative" style={{ minHeight: 'calc(100vh - 320px)' }}>
+            {/* Превью одежды в маленьком окошке справа - только во время генерации */}
+            {isGenerating && tryOnData?.outfitImage?.url && (
+              <motion.div
+                initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 20, scale: 0.8 }}
+                className="absolute top-4 right-4 w-20 h-28 bg-white rounded-lg shadow-lg overflow-hidden border-2 border-gray-200 z-20"
+              >
+                <img
+                  src={tryOnData.outfitImage.url}
+                  alt="Outfit preview"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
+                  Outfit
+                </div>
+              </motion.div>
+            )}
 
-          {/* Сгенерированное изображение */}
-          {generatedImage && (
             <motion.div
-              className="absolute inset-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            >
-              <img
-                src={generatedImage}
-                alt="Generated result"
-                className="w-full h-full object-cover"
-              />
-            </motion.div>
-          )}
-
-          {/* Blur overlay для ChatGPT-анимации - показывается во время генерации */}
-          {(isGenerating || generatedImage) && (
-            <div
-              ref={blurOverlayRef}
-              className="absolute inset-0 pointer-events-none z-10"
-              style={{
-                background: 'linear-gradient(180deg, rgba(240,240,240,0.98) 0%, rgba(240,240,240,0.95) 5%, rgba(240,240,240,0.9) 15%, rgba(240,240,240,0.7) 30%, rgba(240,240,240,0.4) 50%, rgba(240,240,240,0.2) 70%, rgba(240,240,240,0.05) 85%, transparent 95%)',
-                backdropFilter: 'blur(25px)',
-                WebkitBackdropFilter: 'blur(25px)',
-                transform: 'translateY(0%)', // Начальная позиция
-                display: 'block'
-              }}
-            />
-          )}
-
-          {/* Частицы только во время генерации */}
-          {isGenerating && (
-            <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">
-              {generateParticles()}
-            </div>
-          )}
-
-          {/* Оверлей с ошибкой */}
-          {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-red-50/95 backdrop-blur-sm z-20">
-              <div className="text-center p-6">
-                <div className="text-4xl mb-3">⚠️</div>
-                <p className="text-red-600 font-medium mb-4">Generation Failed</p>
-                <p className="text-gray-600 text-sm mb-4">{error}</p>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </div>
-
-      {/* Нижняя секция с кнопками и статусом */}
-      <div className="px-6 py-6 bg-white">
-        {/* Статус генерации - только во время генерации */}
-        {isGenerating && (
-          <div className="text-center mb-6">
-            <AnimatePresence mode="wait">
-              {processingStatus === 'starting' && (
-                <motion.p
-                  key="starting"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-gray-600 text-sm"
-                >
-                  Preparing AI model...
-                </motion.p>
-              )}
-              {processingStatus === 'analyzing' && (
-                <motion.p
-                  key="analyzing"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-gray-600 text-sm"
-                >
-                  Analyzing images...
-                </motion.p>
-              )}
-              {processingStatus === 'generating' && (
-                <motion.p
-                  key="generating"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-gray-600 text-sm"
-                >
-                  <span>Creating image...</span>
-                  {progress > 0 && (
-                    <span className="block text-xs text-gray-500 mt-1">
-                      {Math.round(progress)}%
-                    </span>
-                  )}
-                </motion.p>
-              )}
-              {processingStatus === 'finalizing' && (
-                <motion.p
-                  key="finalizing"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-gray-600 text-sm"
-                >
-                  Finalizing result...
-                </motion.p>
-              )}
-              {error && (
-                <motion.p
-                  key="error"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-red-600 text-sm font-medium"
-                >
-                  Something went wrong. Please try again.
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
-        {/* Кнопки управления - всегда видимы */}
-        <div className="flex space-x-3">
-          {/* Back Button - всегда показана */}
-          <motion.button
-            onClick={handleBackClick}
-            disabled={isGenerating}
-            className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all ${
-              isGenerating
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-gray-800 text-white hover:bg-gray-900'
-            }`}
-            whileHover={!isGenerating ? { scale: 1.02 } : {}}
-            whileTap={!isGenerating ? { scale: 0.98 } : {}}
-          >
-            <ArrowLeft size={16} />
-            <span>Back</span>
-          </motion.button>
-
-          {/* Retry Button - всегда показана */}
-          <motion.button
-            onClick={handleRetry}
-            disabled={isGenerating}
-            className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all ${
-              isGenerating
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-            whileHover={!isGenerating ? { scale: 1.02 } : {}}
-            whileTap={!isGenerating ? { scale: 0.98 } : {}}
-          >
-            <RotateCcw size={16} className={isRetrying ? 'animate-spin' : ''} />
-            <span>{isRetrying ? 'Retrying...' : 'Try Again'}</span>
-          </motion.button>
-
-          {/* Add to Library Button - показана только после завершения */}
-          {isCompleted && !error && (
-            <motion.button
+              ref={containerRef}
+              className="relative w-full max-w-sm h-[55vh] rounded-2xl overflow-hidden shadow-2xl bg-white"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => {
-                // Здесь будет логика добавления в библиотеку
-                console.log('Adding to library...');
-              }}
-              className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-all"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.8 }}
             >
-              <span>+</span>
-              <span>Add to Library</span>
-            </motion.button>
-          )}
+              {/* Плейсхолдер с анимацией - заблюренное превью */}
+              <div ref={placeholderRef} className="absolute inset-0">
+                {/* Заблюренное превью - всегда показано когда есть */}
+                {lowResBlurImage && (
+                  <img
+                    src={lowResBlurImage}
+                    alt="Blurred preview"
+                    className="w-full h-full object-cover"
+                    style={{
+                      filter: 'blur(20px) brightness(1.1)',
+                    }}
+                  />
+                )}
+
+                {/* Fallback плейсхолдер если нет заблюренного превью */}
+                {!lowResBlurImage && (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
+                )}
+              </div>
+
+              {/* Градиентный оверлей для дополнительного размытия во время генерации */}
+              {isGenerating && (
+                <div 
+                  className="absolute inset-0 z-5"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(5px)',
+                  }}
+                />
+              )}
+
+              {/* Сгенерированное изображение */}
+              {generatedImage && (
+                <motion.div
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                >
+                  <img
+                    src={generatedImage}
+                    alt="Generated result"
+                    className="w-full h-full object-cover"
+                  />
+                </motion.div>
+              )}
+
+              {/* Blur overlay для ChatGPT-анимации - показывается во время генерации */}
+              {(isGenerating || generatedImage) && (
+                <div
+                  ref={blurOverlayRef}
+                  className="absolute inset-0 pointer-events-none z-10"
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(240,240,240,0.98) 0%, rgba(240,240,240,0.95) 5%, rgba(240,240,240,0.9) 15%, rgba(240,240,240,0.7) 30%, rgba(240,240,240,0.4) 50%, rgba(240,240,240,0.2) 70%, rgba(240,240,240,0.05) 85%, transparent 95%)',
+                    backdropFilter: 'blur(25px)',
+                    WebkitBackdropFilter: 'blur(25px)',
+                    transform: 'translateY(0%)', // Начальная позиция
+                    display: 'block'
+                  }}
+                />
+              )}
+
+              {/* Частицы только во время генерации */}
+              {isGenerating && (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none z-5">
+                  {generateParticles()}
+                </div>
+              )}
+
+              {/* Оверлей с ошибкой */}
+              {error && (
+                <div className="absolute inset-0 flex items-center justify-center bg-red-50/95 backdrop-blur-sm z-20">
+                  <div className="text-center p-6">
+                    <div className="text-4xl mb-3">⚠️</div>
+                    <p className="text-red-600 font-medium mb-4">Generation Failed</p>
+                    <p className="text-gray-600 text-sm mb-4">{error}</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Нижняя секция с кнопками и статусом */}
+          <div className="px-4 py-4 bg-white border-t border-gray-100">
+            {/* Статус генерации - только во время генерации */}
+            {isGenerating && (
+              <div className="text-center mb-4">
+                <AnimatePresence mode="wait">
+                  {processingStatus === 'starting' && (
+                    <motion.p
+                      key="starting"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-gray-600 text-sm"
+                    >
+                      Preparing AI model...
+                    </motion.p>
+                  )}
+                  {processingStatus === 'analyzing' && (
+                    <motion.p
+                      key="analyzing"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-gray-600 text-sm"
+                    >
+                      Analyzing images...
+                    </motion.p>
+                  )}
+                  {processingStatus === 'generating' && (
+                    <motion.p
+                      key="generating"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-gray-600 text-sm"
+                    >
+                      <span>Creating image...</span>
+                      {progress > 0 && (
+                        <span className="block text-xs text-gray-500 mt-1">
+                          {Math.round(progress)}%
+                        </span>
+                      )}
+                    </motion.p>
+                  )}
+                  {processingStatus === 'finalizing' && (
+                    <motion.p
+                      key="finalizing"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-gray-600 text-sm"
+                    >
+                      Finalizing result...
+                    </motion.p>
+                  )}
+                  {error && (
+                    <motion.p
+                      key="error"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="text-red-600 text-sm font-medium"
+                    >
+                      Something went wrong. Please try again.
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Кнопки управления - всегда видимы */}
+            <div className="flex space-x-3">
+              {/* Back Button - всегда показана */}
+              <motion.button
+                onClick={handleBackClick}
+                disabled={isGenerating}
+                className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
+                  isGenerating
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-gray-800 text-white hover:bg-gray-900'
+                }`}
+                whileHover={!isGenerating ? { scale: 1.02 } : {}}
+                whileTap={!isGenerating ? { scale: 0.98 } : {}}
+              >
+                <ArrowLeft size={16} />
+                <span>Back</span>
+              </motion.button>
+
+              {/* Retry Button - всегда показана */}
+              <motion.button
+                onClick={handleRetry}
+                disabled={isGenerating}
+                className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
+                  isGenerating
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+                whileHover={!isGenerating ? { scale: 1.02 } : {}}
+                whileTap={!isGenerating ? { scale: 0.98 } : {}}
+              >
+                <RotateCcw size={16} className={isRetrying ? 'animate-spin' : ''} />
+                <span>{isRetrying ? 'Retrying...' : 'Try Again'}</span>
+              </motion.button>
+
+              {/* Add to Library Button - показана только после завершения */}
+              {isCompleted && !error && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  onClick={() => {
+                    // Здесь будет логика добавления в библиотеку
+                    console.log('Adding to library...');
+                  }}
+                  className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-all touch-manipulation"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <span>+</span>
+                  <span>Add to Library</span>
+                </motion.button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
