@@ -109,11 +109,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
     const Icon = isPerson ? User : Shirt;
     const buttonText = isPerson ? "Upload Your Image" : "Upload Clothing";
 
-    // Адаптируем градиенты для светлой темы
-    const lightThemeGradients = {
-      person: "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400",
-      outfit: "bg-gradient-to-br from-green-400 via-blue-400 to-purple-400"
-    };
+
 
     return (
       <motion.div
