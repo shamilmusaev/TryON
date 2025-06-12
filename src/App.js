@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import './index.css';
-// import OnboardingPage from './components/OnboardingPage'; // Removed onboarding page
+import OnboardingPage from './components/OnboardingPage';
 import HomePage from './components/HomePage';
 import UploadPage from './components/UploadPage';
 import ProcessingPage from './components/ProcessingPage';
 import ResultPage from './components/ResultPage';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home'); // home, upload, processing, result
+function AppContent() {
+  const { isDark } = useTheme();
+  const [currentView, setCurrentView] = useState('home'); // home, upload, processing, result, onboarding
   const [tryOnData, setTryOnData] = useState(null); // Данные для генерации
   const [resultData, setResultData] = useState(null); // Результаты генерации
 
@@ -70,7 +72,7 @@ function App() {
       }
     }
     
-    setCurrentPage(page);
+    setCurrentView(page);
   };
 
   // Начало процесса try-on
@@ -92,7 +94,7 @@ function App() {
 
   // Возврат на предыдущую страницу
   const handleBack = () => {
-    switch (currentPage) {
+    switch (currentView) {
       case 'upload':
         handleNavigation('home');
         break;
@@ -102,6 +104,9 @@ function App() {
       case 'result':
         handleNavigation('home');
         break;
+      case 'onboarding':
+        handleNavigation('home');
+        break;
       default:
         handleNavigation('home');
     }
@@ -109,7 +114,7 @@ function App() {
 
   // Рендер текущей страницы
   const renderCurrentPage = () => {
-    switch (currentPage) {
+    switch (currentView) {
       case 'home':
         return (
           <HomePage
@@ -145,6 +150,14 @@ function App() {
           />
         );
 
+      case 'onboarding':
+        return (
+          <OnboardingPage
+            onBack={handleBack}
+            onNavigation={handleNavigation}
+          />
+        );
+
       default:
         return (
           <HomePage
@@ -156,19 +169,19 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
+    <div className={`min-h-screen overflow-hidden transition-all duration-500 ${
+      isDark 
+        ? 'gradient-bg text-white' 
+        : 'gradient-bg-light text-primary-light'
+    }`}>
       {/* Page transitions */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={currentPage}
+          key={currentView}
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -100 }}
-          transition={{ 
-            duration: 0.3, 
-            ease: "easeInOut" 
-          }}
-          className="min-h-screen"
+          transition={{ duration: 0.3 }}
         >
           {renderCurrentPage()}
         </motion.div>
@@ -180,6 +193,14 @@ function App() {
       {/* Service worker для offline support */}
       {/* Можно добавить PWA функционал */}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

@@ -140,6 +140,101 @@
     background: linear-gradient(to bottom right, #111827, #000000, #111827);
   }
 
+  .gradient-bg-light {
+    background: linear-gradient(135deg, #e0f7ff 0%, #fef3ff 25%, #f3e8ff 50%, #e9d5ff 75%, #dbeafe 100%);
+  }
+
+  .glass-card-dark {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .glass-card-light {
+    backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .text-primary-dark {
+    color: #ffffff;
+  }
+
+  .text-primary-light {
+    color: #374151;
+  }
+
+  .text-secondary-dark {
+    color: #9ca3af;
+  }
+
+  .text-secondary-light {
+    color: #4b5563;
+  }
+
+  /* Улучшенные glassmorphism стили для upload карточек */
+  .glass-upload-card-light {
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+  }
+
+  .glass-upload-card-dark {
+    backdrop-filter: blur(20px);
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Apple-style glassmorphism для ActionGrid карточек */
+  .apple-glass-light {
+    backdrop-filter: blur(25px);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 
+      0 8px 32px rgba(31, 38, 135, 0.15),
+      0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  .apple-glass-dark {
+    backdrop-filter: blur(25px);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Специальные градиенты для светлой темы */
+  .light-gradient-purple {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.8) 0%, rgba(167, 139, 250, 0.6) 100%);
+  }
+
+  .light-gradient-orange {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.8) 0%, rgba(252, 165, 165, 0.6) 100%);
+  }
+
+  .light-gradient-neon {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.8) 0%, rgba(74, 222, 128, 0.6) 100%);
+  }
+
+  .gradient-header-dark {
+    background: rgba(17, 24, 39, 0.9);
+  }
+
+  .gradient-header-light {
+    background: rgba(255, 255, 255, 0.9);
+  }
+
   /* Полное сокрытие скроллбара */
   .scrollbar-hide {
     scrollbar-width: none;

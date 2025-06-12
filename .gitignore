@@ -12,3 +12,8 @@ node_modules
 *.pem
 secrets/
 
+
+# React Component Preview
+previewConfig.json
+*storybook.log
+storybook-static

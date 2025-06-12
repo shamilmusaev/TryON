@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, RotateCcw, CheckCircle } from 'lucide-react';
-import { useCamera } from '../../hooks/useCamera';
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Camera, RotateCcw, CheckCircle } from "lucide-react";
+import { useCamera } from "../../hooks/useCamera";
 
-const CameraCapture = ({ 
-  isOpen, 
-  onClose, 
-  onCapture, 
-  type = 'person',
-  className = '' 
+const CameraCapture = ({
+  isOpen,
+  onClose,
+  onCapture,
+  type = "person",
+  className = "",
 }) => {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -24,20 +24,20 @@ const CameraCapture = ({
     reset,
     isCameraSupported,
     videoRef,
-    canvasRef
+    canvasRef,
   } = useCamera({
-    facingMode: type === 'person' ? 'user' : 'environment',
+    facingMode: type === "person" ? "user" : "environment",
     onCapture: (photoData) => {
       setCapturedPhoto(photoData);
       setShowPreview(true);
     },
     onError: (error) => {
-      console.error('Camera error:', error);
-    }
+      console.error("Camera error:", error);
+    },
   });
 
-  const isPersonPhoto = type === 'person';
-  const accentColor = isPersonPhoto ? 'green' : 'orange';
+  const isPersonPhoto = type === "person";
+  const accentColor = isPersonPhoto ? "green" : "orange";
 
   useEffect(() => {
     if (isOpen && isCameraSupported()) {
@@ -87,9 +87,12 @@ const CameraCapture = ({
           className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full text-center"
         >
           <div className="text-red-400 text-4xl mb-4">📷</div>
-          <h3 className="text-white font-semibold mb-2">Camera Not Supported</h3>
+          <h3 className="text-white font-semibold mb-2">
+            Camera Not Supported
+          </h3>
           <p className="text-gray-400 text-sm mb-4">
-            Your browser doesn't support camera access. Please use the gallery option instead.
+            Your browser doesn't support camera access. Please use the gallery
+            option instead.
           </p>
           <button
             onClick={handleClose}
@@ -119,21 +122,22 @@ const CameraCapture = ({
             >
               <X size={24} />
             </button>
-            
+
             <div className="text-center">
               <h2 className="text-white font-semibold">
-                {showPreview ? 'Review Photo' : `Take ${isPersonPhoto ? 'Selfie' : 'Clothing Photo'}`}
+                {showPreview
+                  ? "Review Photo"
+                  : `Take ${isPersonPhoto ? "Selfie" : "Clothing Photo"}`}
               </h2>
               <p className="text-gray-400 text-sm">
-                {showPreview 
-                  ? 'Confirm or retake the photo' 
-                  : isPersonPhoto 
-                    ? 'Face the camera directly'
-                    : 'Show the clothing item clearly'
-                }
+                {showPreview
+                  ? "Confirm or retake the photo"
+                  : isPersonPhoto
+                    ? "Face the camera directly"
+                    : "Show the clothing item clearly"}
               </p>
             </div>
-            
+
             {!showPreview && (
               <button
                 onClick={switchCamera}
@@ -159,7 +163,7 @@ const CameraCapture = ({
                 alt="Captured photo"
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Preview overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/40" />
             </motion.div>
@@ -173,33 +177,40 @@ const CameraCapture = ({
                 muted
                 className={`
                   w-full h-full object-cover
-                  ${isPersonPhoto ? 'scale-x-[-1]' : ''} // Зеркало для селфи
+                  ${isPersonPhoto ? "scale-x-[-1]" : ""} // Зеркало для селфи
                 `}
               />
-              
+
               {/* Camera overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/40" />
-              
+
               {/* Loading state */}
               {!isActive && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
                   <div className="text-center">
                     <motion.div
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                       className={`w-12 h-12 border-4 border-${accentColor}-500 border-t-transparent rounded-full mx-auto mb-4`}
                     />
+
                     <p className="text-white">Starting camera...</p>
                   </div>
                 </div>
               )}
-              
+
               {/* Error state */}
               {error && (
                 <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
                   <div className="text-center p-6">
                     <div className="text-red-400 text-4xl mb-4">⚠️</div>
-                    <h3 className="text-white font-semibold mb-2">Camera Error</h3>
+                    <h3 className="text-white font-semibold mb-2">
+                      Camera Error
+                    </h3>
                     <p className="text-gray-400 text-sm mb-4">{error}</p>
                     <button
                       onClick={startCamera}
@@ -227,16 +238,17 @@ const CameraCapture = ({
               >
                 Retake
               </motion.button>
-              
+
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleConfirm}
                 className={`
                   flex-1 max-w-32 py-3 px-6 rounded-2xl font-medium transition-colors
-                  ${isPersonPhoto 
-                    ? 'bg-green-500 hover:bg-green-600 text-black' 
-                    : 'bg-orange-500 hover:bg-orange-600 text-black'
+                  ${
+                    isPersonPhoto
+                      ? "bg-green-500 hover:bg-green-600 text-black"
+                      : "bg-orange-500 hover:bg-orange-600 text-black"
                   }
                 `}
               >
@@ -257,14 +269,18 @@ const CameraCapture = ({
                 className={`
                   w-20 h-20 rounded-full border-4 border-white bg-transparent
                   flex items-center justify-center
-                  ${!isActive || isCapturing ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10'}
+                  ${!isActive || isCapturing ? "opacity-50 cursor-not-allowed" : "hover:bg-white/10"}
                   transition-all duration-200
                 `}
               >
                 {isCapturing ? (
                   <motion.div
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                     className="w-8 h-8 border-2 border-white border-t-transparent rounded-full"
                   />
                 ) : (
@@ -273,7 +289,7 @@ const CameraCapture = ({
               </motion.button>
             </div>
           )}
-          
+
           {/* Capture hints */}
           {!showPreview && isActive && (
             <motion.div
@@ -283,10 +299,9 @@ const CameraCapture = ({
               className="text-center mt-4"
             >
               <p className="text-gray-300 text-sm">
-                {isPersonPhoto 
-                  ? 'Position your face in the center and tap to capture'
-                  : 'Show the clothing item clearly and tap to capture'
-                }
+                {isPersonPhoto
+                  ? "Position your face in the center and tap to capture"
+                  : "Show the clothing item clearly and tap to capture"}
               </p>
             </motion.div>
           )}
@@ -299,4 +314,4 @@ const CameraCapture = ({
   );
 };
 
-export default CameraCapture; 
+export default CameraCapture;

@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion';
-import ColorSwatch from '../ui/ColorSwatch';
+import { motion } from "framer-motion";
+import ColorSwatch from "../ui/ColorSwatch";
 
-const ColorPalette = ({ 
-  colors, 
-  selectedColorId, 
+const ColorPalette = ({
+  colors,
+  selectedColorId,
   onColorSelect,
-  className = ''
+  className = "",
 }) => {
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -13,9 +13,9 @@ const ColorPalette = ({
       opacity: 1,
       transition: {
         staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const itemVariants = {
@@ -25,15 +25,15 @@ const ColorPalette = ({
       scale: 1,
       transition: {
         duration: 0.3,
-        type: "spring"
-      }
-    }
+        type: "spring",
+      },
+    },
   };
 
   return (
     <div className={`space-y-3 ${className}`}>
       <h3 className="text-white text-sm font-medium">Choose Color</h3>
-      
+
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -64,11 +64,11 @@ const ColorPalette = ({
         className="text-center"
       >
         <span className="text-gray-300 text-xs">
-          {colors.find(c => c.id === selectedColorId)?.name || 'Unknown'}
+          {colors.find((c) => c.id === selectedColorId)?.name || "Unknown"}
         </span>
       </motion.div>
     </div>
   );
 };
 
-export default ColorPalette; 
+export default ColorPalette;

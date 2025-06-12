@@ -1,6 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { SPLIT_IMAGES } from '../types/onboarding.types';
+import React from "react";
+import { motion } from "framer-motion";
+import { SPLIT_IMAGES } from "../types/onboarding.types";
 
 const HeroBackground = ({ children }) => {
   return (
@@ -19,6 +19,7 @@ const HeroBackground = ({ children }) => {
             alt="Male model"
             className="w-full h-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30" />
         </motion.div>
 
@@ -34,6 +35,7 @@ const HeroBackground = ({ children }) => {
             alt="Female model"
             className="w-full h-full object-cover"
           />
+
           <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/30" />
         </motion.div>
       </div>
@@ -45,15 +47,15 @@ const HeroBackground = ({ children }) => {
       <motion.div
         animate={{
           background: [
-            'linear-gradient(45deg, rgba(0,255,136,0.1) 0%, rgba(138,92,246,0.1) 100%)',
-            'linear-gradient(45deg, rgba(138,92,246,0.1) 0%, rgba(0,255,136,0.1) 100%)',
-            'linear-gradient(45deg, rgba(0,255,136,0.1) 0%, rgba(138,92,246,0.1) 100%)'
-          ]
+            "linear-gradient(45deg, rgba(0,255,136,0.1) 0%, rgba(138,92,246,0.1) 100%)",
+            "linear-gradient(45deg, rgba(138,92,246,0.1) 0%, rgba(0,255,136,0.1) 100%)",
+            "linear-gradient(45deg, rgba(0,255,136,0.1) 0%, rgba(138,92,246,0.1) 100%)",
+          ],
         }}
         transition={{
           duration: 8,
           repeat: Infinity,
-          ease: "linear"
+          ease: "linear",
         }}
         className="absolute inset-0"
       />
@@ -74,7 +76,7 @@ const HeroBackground = ({ children }) => {
             transition={{
               duration: 20 + Math.random() * 10,
               repeat: Infinity,
-              ease: "linear"
+              ease: "linear",
             }}
             className="w-2 h-2 bg-neon-green/30 rounded-full blur-sm"
           />
@@ -82,11 +84,9 @@ const HeroBackground = ({ children }) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
-        {children}
-      </div>
+      <div className="relative z-10">{children}</div>
     </div>
   );
 };
 
-export default HeroBackground; 
+export default HeroBackground;

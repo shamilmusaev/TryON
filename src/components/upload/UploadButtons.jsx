@@ -1,17 +1,17 @@
-import { motion } from 'framer-motion';
-import { Camera, ShoppingBag, FolderOpen } from 'lucide-react';
-import Button from '../ui/Button';
+import { motion } from "framer-motion";
+import { Camera, ShoppingBag, FolderOpen } from "lucide-react";
+import Button from "../ui/Button";
 
-const UploadButtons = ({ 
-  type = 'user_photo', 
-  onCameraClick, 
-  onGalleryClick, 
+const UploadButtons = ({
+  type = "user_photo",
+  onCameraClick,
+  onGalleryClick,
   onCatalogClick,
   isUploading = false,
-  className = '' 
+  className = "",
 }) => {
-  const isUserPhoto = type === 'user_photo';
-  const primaryColor = isUserPhoto ? 'neon-green' : 'orange-400';
+  const isUserPhoto = type === "user_photo";
+  const primaryColor = isUserPhoto ? "neon-green" : "orange-400";
 
   const handleFileInput = (e) => {
     const file = e.target.files?.[0];
@@ -19,7 +19,7 @@ const UploadButtons = ({
       onGalleryClick(file);
     }
     // Reset input для повторного выбора того же файла
-    e.target.value = '';
+    e.target.value = "";
   };
 
   return (
@@ -33,15 +33,16 @@ const UploadButtons = ({
           className="flex-1"
         >
           <Button
-            variant={isUserPhoto ? 'primary' : 'secondary'}
+            variant={isUserPhoto ? "primary" : "secondary"}
             size="large"
             onClick={onCameraClick}
             disabled={isUploading}
             className={`
               w-full flex items-center justify-center space-x-2 h-14
-              ${isUserPhoto 
-                ? 'bg-neon-green text-black hover:bg-neon-green/90' 
-                : 'bg-orange-400 text-black hover:bg-orange-400/90'
+              ${
+                isUserPhoto
+                  ? "bg-neon-green text-black hover:bg-neon-green/90"
+                  : "bg-orange-400 text-black hover:bg-orange-400/90"
               }
               font-medium transition-all duration-300
               shadow-lg shadow-${primaryColor}/25
@@ -72,7 +73,7 @@ const UploadButtons = ({
             <FolderOpen className="w-5 h-5" />
             <span>Gallery</span>
           </Button>
-          
+
           {/* Hidden file input */}
           <input
             type="file"
@@ -119,12 +120,11 @@ const UploadButtons = ({
         className="text-center space-y-2"
       >
         <div className="text-xs text-gray-400">
-          {isUserPhoto 
-            ? '📱 Mobile: Use front camera for best results'
-            : '📸 Clear, well-lit photos work best'
-          }
+          {isUserPhoto
+            ? "📱 Mobile: Use front camera for best results"
+            : "📸 Clear, well-lit photos work best"}
         </div>
-        
+
         <div className="flex items-center justify-center space-x-4 text-xs text-gray-500">
           <span>• Max 10MB</span>
           <span>• JPG, PNG, WebP</span>
@@ -145,6 +145,7 @@ const UploadButtons = ({
               transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
               className="w-8 h-8 border-2 border-neon-green border-t-transparent rounded-full mx-auto"
             />
+
             <p className="text-white text-sm font-medium">Processing...</p>
           </div>
         </motion.div>
@@ -153,4 +154,4 @@ const UploadButtons = ({
   );
 };
 
-export default UploadButtons; 
+export default UploadButtons;

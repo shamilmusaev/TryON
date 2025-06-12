@@ -48,7 +48,7 @@ export const mockStats = {
 };
 
 export const mockUserData = {
-  name: 'Anna',
+  name: 'Shamil',
   avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
   recentTryOns: [
     'https://images.unsplash.com/photo-1445205170230-053b83016050?w=60&h=60&fit=crop',

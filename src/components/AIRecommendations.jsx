@@ -1,15 +1,17 @@
-import { motion } from 'framer-motion';
-import { Star, Heart, ArrowRight, Sparkles } from 'lucide-react';
+import { motion } from "framer-motion";
+import { Star, Heart, ArrowRight, Sparkles } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
+  const { isDark } = useTheme();
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.15
-      }
-    }
+        staggerChildren: 0.15,
+      },
+    },
   };
 
   const itemVariants = {
@@ -20,9 +22,9 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
       scale: 1,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   return (
@@ -35,28 +37,38 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
       >
         <div className="flex items-center space-x-3">
           <motion.div
-            animate={{ 
+            animate={{
               rotate: [0, 360],
-              scale: [1, 1.2, 1]
+              scale: [1, 1.2, 1],
             }}
-            transition={{ 
-              duration: 3, 
+            transition={{
+              duration: 3,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
             className="w-8 h-8 bg-neon-green/20 rounded-full flex items-center justify-center"
           >
             <Sparkles className="w-4 h-4 text-neon-green" />
           </motion.div>
           <div>
-            <h2 className="text-white text-xl font-bold mb-1">AI Picked For You</h2>
-            <p className="text-gray-400 text-sm">Personalized style recommendations</p>
+            <h2 className={`text-xl font-bold mb-1 ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}>
+              AI Picked For You
+            </h2>
+            <p className={`text-sm ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}>
+              Personalized style recommendations
+            </p>
           </div>
         </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center space-x-2 text-neon-green text-sm font-medium glassmorphism px-3 py-2 rounded-full"
+          className={`flex items-center space-x-2 text-neon-green text-sm font-medium px-3 py-2 rounded-full ${
+            isDark ? 'glassmorphism' : 'apple-glass-light'
+          }`}
         >
           <span>View All</span>
           <ArrowRight size={14} />
@@ -68,10 +80,10 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
         initial="hidden"
         animate="visible"
         className="flex space-x-4 overflow-x-auto pb-4"
-        style={{ 
-          scrollbarWidth: 'none', 
-          msOverflowStyle: 'none',
-          WebkitOverflowScrolling: 'touch'
+        style={{
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {recommendations.map((item, index) => (
@@ -81,7 +93,9 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
             whileHover={{ y: -12, scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => onRecommendationClick?.(item.id)}
-            className="min-w-[220px] glassmorphism rounded-3xl p-5 cursor-pointer group relative overflow-hidden"
+            className={`min-w-[220px] rounded-3xl p-5 cursor-pointer group relative overflow-hidden ${
+              isDark ? 'glassmorphism' : 'apple-glass-light'
+            }`}
           >
             {/* Glow effect on hover */}
             <motion.div
@@ -99,9 +113,9 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.3 }}
               />
-              
+
               {/* Confidence badge */}
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 + index * 0.1 }}
@@ -109,7 +123,10 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
               >
                 <div className="flex items-center space-x-1">
                   <Star className="w-3 h-3 text-neon-green fill-neon-green" />
-                  <span className="text-white text-xs font-semibold">{item.confidence}%</span>
+
+                  <span className="text-white text-xs font-semibold">
+                    {item.confidence}%
+                  </span>
                 </div>
               </motion.div>
 
@@ -143,25 +160,27 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
             </div>
 
             <div className="relative">
-              <h3 className="text-white font-bold text-lg mb-2">
+              <h3 className={`font-bold text-lg mb-2 ${
+                isDark ? 'text-white' : 'text-gray-800'
+              }`}>
                 {item.title}
               </h3>
-              <p className="text-gray-300 text-sm mb-3">
-                {item.description}
-              </p>
-              
+              <p className={`text-sm mb-3 ${
+                isDark ? 'text-gray-300' : 'text-gray-600'
+              }`}>{item.description}</p>
+
               <div className="flex items-center justify-between">
-                <motion.span 
+                <motion.span
                   whileHover={{ scale: 1.05 }}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium ${
-                    item.type === 'outfit' 
-                      ? 'bg-purple-500/30 text-purple-200 border border-purple-400/30'
-                      : 'bg-orange-500/30 text-orange-200 border border-orange-400/30'
+                    item.type === "outfit"
+                      ? "bg-purple-500/30 text-purple-200 border border-purple-400/30"
+                      : "bg-orange-500/30 text-orange-200 border border-orange-400/30"
                   }`}
                 >
-                  {item.type === 'outfit' ? '👗 Complete Look' : '💡 Style Tip'}
+                  {item.type === "outfit" ? "👗 Complete Look" : "💡 Style Tip"}
                 </motion.span>
-                
+
                 <motion.div
                   animate={{ x: [0, 8, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -176,14 +195,14 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
             {/* Floating particles effect */}
             {index === 1 && (
               <motion.div
-                animate={{ 
+                animate={{
                   y: [0, -10, 0],
-                  opacity: [0.3, 0.8, 0.3]
+                  opacity: [0.3, 0.8, 0.3],
                 }}
-                transition={{ 
-                  duration: 2, 
+                transition={{
+                  duration: 2,
                   repeat: Infinity,
-                  delay: 1
+                  delay: 1,
                 }}
                 className="absolute top-4 right-16 text-neon-green text-xs"
               >
@@ -225,4 +244,4 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
   );
 };
 
-export default AIRecommendations; 
+export default AIRecommendations;

@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion';
-import { ANIMATION_DELAYS } from '../../types/onboarding.types';
+import { motion } from "framer-motion";
+import { ANIMATION_DELAYS } from "../../types/onboarding.types";
 
 const FeatureHighlight = ({ features }) => {
   const containerVariants = {
@@ -8,9 +8,9 @@ const FeatureHighlight = ({ features }) => {
       opacity: 1,
       transition: {
         staggerChildren: 0.2,
-        delayChildren: ANIMATION_DELAYS.FEATURES
-      }
-    }
+        delayChildren: ANIMATION_DELAYS.FEATURES,
+      },
+    },
   };
 
   const itemVariants = {
@@ -20,9 +20,9 @@ const FeatureHighlight = ({ features }) => {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   return (
@@ -50,16 +50,20 @@ const FeatureHighlight = ({ features }) => {
               whileHover={{ opacity: 1 }}
               className="absolute inset-0 bg-neon-green/20 rounded-2xl"
             />
-            
+
             <motion.span
-              animate={index === 1 ? {
-                scale: [1, 1.2, 1],
-                rotate: [0, 10, -10, 0]
-              } : {}}
+              animate={
+                index === 1
+                  ? {
+                      scale: [1, 1.2, 1],
+                      rotate: [0, 10, -10, 0],
+                    }
+                  : {}
+              }
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
               className="text-2xl md:text-3xl relative z-10"
             >
@@ -71,12 +75,12 @@ const FeatureHighlight = ({ features }) => {
               <motion.div
                 animate={{
                   scale: [0, 1, 0],
-                  rotate: [0, 180, 360]
+                  rotate: [0, 180, 360],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  delay: 1
+                  delay: 1,
                 }}
                 className="absolute top-1 right-1 text-neon-green text-xs"
               >
@@ -89,7 +93,9 @@ const FeatureHighlight = ({ features }) => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: ANIMATION_DELAYS.FEATURES + 0.3 + index * 0.1 }}
+            transition={{
+              delay: ANIMATION_DELAYS.FEATURES + 0.3 + index * 0.1,
+            }}
           >
             <h3 className="text-white font-semibold text-sm md:text-base mb-1">
               {feature.title}
@@ -103,10 +109,10 @@ const FeatureHighlight = ({ features }) => {
           {index < features.length - 1 && (
             <motion.div
               initial={{ width: 0 }}
-              animate={{ width: '100%' }}
-              transition={{ 
+              animate={{ width: "100%" }}
+              transition={{
                 delay: ANIMATION_DELAYS.FEATURES + 0.5,
-                duration: 0.8
+                duration: 0.8,
               }}
               className="absolute top-8 left-full w-8 h-px bg-gradient-to-r from-neon-green/50 to-transparent hidden md:block"
             />
@@ -117,4 +123,4 @@ const FeatureHighlight = ({ features }) => {
   );
 };
 
-export default FeatureHighlight; 
+export default FeatureHighlight;

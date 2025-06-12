@@ -1,30 +1,30 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-const IconButton = ({ 
-  icon: Icon, 
-  onClick, 
-  size = 'medium',
-  variant = 'default',
-  className = '',
+const IconButton = ({
+  icon: Icon,
+  onClick,
+  size = "medium",
+  variant = "default",
+  className = "",
   isActive = false,
-  ...props 
+  ...props
 }) => {
   const sizes = {
-    small: 'w-8 h-8',
-    medium: 'w-12 h-12',
-    large: 'w-14 h-14'
+    small: "w-8 h-8",
+    medium: "w-12 h-12",
+    large: "w-14 h-14",
   };
 
   const iconSizes = {
     small: 16,
     medium: 20,
-    large: 24
+    large: 24,
   };
 
   const variants = {
-    default: 'bg-black/20 backdrop-blur-md border border-white/20',
-    active: 'bg-neon-green/90 backdrop-blur-md border border-neon-green',
-    danger: 'bg-red-500/90 backdrop-blur-md border border-red-400'
+    default: "bg-black/20 backdrop-blur-md border border-white/20",
+    active: "bg-neon-green/90 backdrop-blur-md border border-neon-green",
+    danger: "bg-red-500/90 backdrop-blur-md border border-red-400",
   };
 
   return (
@@ -49,4 +49,4 @@ const IconButton = ({
   );
 };
 
-export default IconButton; 
+export default IconButton;

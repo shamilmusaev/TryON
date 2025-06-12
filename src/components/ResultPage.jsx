@@ -1,37 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCcw, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, RotateCcw, X } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const ResultPage = ({ onBack, onNavigation, resultData }) => {
+  const { isDark } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [resultImage, setResultImage] = useState(null);
 
   // Обрабатываем входящие данные результата
   useEffect(() => {
-    console.log('🔍 ResultPage получил данные:', resultData);
-    
+    console.log("🔍 ResultPage получил данные:", resultData);
+
     if (resultData && resultData.output) {
       // Если есть готовый результат, сразу показываем его
-      const imageUrl = Array.isArray(resultData.output) ? resultData.output[0] : resultData.output;
+      const imageUrl = Array.isArray(resultData.output)
+        ? resultData.output[0]
+        : resultData.output;
       setResultImage({
         url: imageUrl,
-        title: 'AI Generated Result',
+        title: "AI Generated Result",
         generatedAt: resultData.generatedAt,
-        predictionId: resultData.id
+        predictionId: resultData.id,
       });
       setIsLoading(false);
     } else {
       // Если результата нет, показываем состояние загрузки
-      console.log('⏳ Результат еще генерируется...');
-      
+      console.log("⏳ Результат еще генерируется...");
+
       // Симуляция ожидания результата (в реальном приложении это будет приходить от ProcessingPage)
       const timer = setTimeout(() => {
         // Fallback изображение если результат так и не пришел
         setResultImage({
-          url: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&crop=face',
-          title: 'Demo Result',
-          generatedAt: new Date().toISOString()
+          url: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&crop=face",
+          title: "Demo Result",
+          generatedAt: new Date().toISOString(),
         });
         setIsLoading(false);
       }, 3000);
@@ -42,7 +46,7 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
 
   const handleRetry = () => {
     if (!isLoading) {
-      onNavigation('upload');
+      onNavigation("upload");
     }
   };
 
@@ -63,27 +67,52 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={`min-h-screen transition-all duration-500 ${
+      isDark 
+        ? 'bg-gradient-to-br from-gray-900 via-purple-900/20 to-black' 
+        : 'bg-gradient-to-br from-blue-50 via-purple-50/30 to-white'
+    }`}>
       {/* Safe area для iPhone 14 Pro */}
       <div className="pt-safe-top pb-safe-bottom">
         <div className="flex flex-col h-screen">
           {/* Result Image Section - занимает основную часть экрана */}
-          <div className="flex-1 relative bg-white shadow-lg overflow-hidden">
+          <div className={`flex-1 relative overflow-hidden ${
+            isDark ? 'apple-glass-dark' : 'apple-glass-light'
+          } m-4 rounded-3xl shadow-2xl`}>
             {isLoading ? (
               // Loading State
-              <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center p-4">
+              <div className="w-full h-full flex items-center justify-center p-4">
                 <div className="text-center max-w-sm">
                   <motion.div
-                    className="w-16 h-16 mx-auto mb-4 border-4 border-blue-500 border-t-transparent rounded-full"
+                    className={`w-16 h-16 mx-auto mb-4 border-4 border-t-transparent rounded-full ${
+                      isDark ? 'border-purple-400' : 'border-purple-500'
+                    }`}
                     animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    transition={{
+                      duration: 1,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
                   />
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">Генерируем результат</h3>
-                  <p className="text-gray-500 text-sm mb-3">Пожалуйста, подождите...</p>
+
+                  <h3 className={`text-lg font-semibold mb-2 ${
+                    isDark ? 'text-white' : 'text-gray-700'
+                  }`}>
+                    Генерируем результат
+                  </h3>
+                  <p className={`text-sm mb-3 ${
+                    isDark ? 'text-gray-300' : 'text-gray-500'
+                  }`}>
+                    Пожалуйста, подождите...
+                  </p>
                   <div className="w-full">
-                    <div className="bg-gray-200 rounded-full h-2">
+                    <div className={`rounded-full h-2 ${
+                      isDark ? 'bg-gray-700' : 'bg-gray-200'
+                    }`}>
                       <motion.div
-                        className="bg-blue-500 h-2 rounded-full"
+                        className={`h-2 rounded-full ${
+                          isDark ? 'bg-purple-400' : 'bg-purple-500'
+                        }`}
                         initial={{ width: "0%" }}
                         animate={{ width: "100%" }}
                         transition={{ duration: 3, ease: "easeInOut" }}
@@ -98,13 +127,13 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6 }}
-                className="w-full h-full cursor-pointer relative"
+                className="w-full h-full cursor-pointer relative group"
                 onClick={handleImageClick}
               >
                 <img
                   src={resultImage.url}
                   alt={resultImage.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-3xl"
                 />
 
                 {/* Success indicator */}
@@ -113,15 +142,25 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.3, duration: 0.4 }}
-                    className="absolute top-4 right-4 bg-green-500 text-white p-2 rounded-full shadow-lg"
+                    className={`absolute top-4 right-4 p-3 rounded-2xl shadow-lg ${
+                      isDark ? 'apple-glass-dark' : 'apple-glass-light'
+                    }`}
                   >
-                    <div className="w-3 h-3 flex items-center justify-center text-xs">✓</div>
+                    <div className={`w-5 h-5 flex items-center justify-center text-sm font-bold ${
+                      isDark ? 'text-green-400' : 'text-green-600'
+                    }`}>
+                      ✓
+                    </div>
                   </motion.div>
                 )}
 
                 {/* Tap hint overlay */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium opacity-0 hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className={`px-6 py-3 rounded-2xl text-sm font-medium backdrop-blur-xl shadow-lg ${
+                    isDark 
+                      ? 'bg-black/60 text-white border border-white/20' 
+                      : 'bg-white/80 text-gray-800 border border-gray-200/50'
+                  }`}>
                     Нажмите для увеличения
                   </div>
                 </div>
@@ -130,17 +169,21 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
           </div>
 
           {/* Bottom Section - кнопки */}
-          <div className="px-4 py-4 bg-white border-t border-gray-100">
+          <div className="px-4 py-4">
             {/* Action Buttons */}
-            <div className="flex space-x-3 mb-4">
+            <div className="flex space-x-3">
               {/* Back Button */}
               <motion.button
                 onClick={handleBack}
                 disabled={isLoading}
-                className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
+                className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
                   isLoading
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-800 text-white hover:bg-gray-900'
+                    ? isDark 
+                      ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-300/50 text-gray-500 cursor-not-allowed"
+                    : isDark
+                      ? "apple-glass-dark border border-white/10 text-white hover:border-white/20"
+                      : "apple-glass-light border border-gray-200/50 text-gray-700 hover:border-gray-300"
                 }`}
                 whileHover={!isLoading ? { scale: 1.02 } : {}}
                 whileTap={!isLoading ? { scale: 0.98 } : {}}
@@ -153,10 +196,14 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               <motion.button
                 onClick={handleRetry}
                 disabled={isLoading}
-                className={`flex-1 flex items-center justify-center space-x-2 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
+                className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
                   isLoading
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? isDark 
+                      ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                      : "bg-gray-300/50 text-gray-500 cursor-not-allowed"
+                    : isDark
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 shadow-lg"
+                      : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-lg"
                 }`}
                 whileHover={!isLoading ? { scale: 1.02 } : {}}
                 whileTap={!isLoading ? { scale: 0.98 } : {}}
@@ -165,26 +212,6 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 <span>Попробовать еще</span>
               </motion.button>
             </div>
-
-            {/* Result Info - компактная версия */}
-            {!isLoading && resultImage && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="text-center bg-gray-50 rounded-xl p-3"
-              >
-                <div className="flex items-center justify-center space-x-2">
-                  <span className="text-lg">🎉</span>
-                  <span className="text-sm font-medium text-gray-800">Результат готов!</span>
-                </div>
-                {resultImage.generatedAt && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(resultImage.generatedAt).toLocaleString('ru-RU')}
-                  </div>
-                )}
-              </motion.div>
-            )}
           </div>
         </div>
       </div>
@@ -234,7 +261,9 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               className="absolute bottom-6 left-4 right-4 text-center"
             >
               <div className="bg-black/80 backdrop-blur-xl text-white px-4 py-3 rounded-2xl inline-block max-w-sm">
-                <h3 className="font-medium text-sm mb-1">{resultImage.title}</h3>
+                <h3 className="font-medium text-sm mb-1">
+                  {resultImage.title}
+                </h3>
                 <p className="text-xs text-gray-300">
                   Нажмите на фон или X чтобы закрыть
                 </p>
@@ -247,4 +276,4 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
   );
 };
 
-export default ResultPage; 
+export default ResultPage;

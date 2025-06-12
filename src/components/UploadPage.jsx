@@ -1,109 +1,346 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, HelpCircle, User, Plus, ChevronDown } from 'lucide-react';
-import ProcessingPage from './ProcessingPage';
-import imageConverter from '../services/imageConverter';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, HelpCircle, User, Shirt, ChevronDown, CheckCircle } from "lucide-react";
+import imageConverter from "../services/imageConverter";
+import { useTheme } from "../contexts/ThemeContext";
+import userImageStorage from "../services/userImageStorage";
 
 const UploadPage = ({ onBack, onContinue, onNavigation }) => {
+  const { isDark } = useTheme();
   const [uploadedPersonPhoto, setUploadedPersonPhoto] = useState(null);
   const [uploadedOutfitPhoto, setUploadedOutfitPhoto] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStates, setProcessingStates] = useState({
-    person: false,
-    outfit: false
-  });
+
+  const [processingStates, setProcessingStates] = useState({ person: false, outfit: false });
   const [showGuideModal, setShowGuideModal] = useState(false);
+
+  const personInputRef = useRef(null);
+  const outfitInputRef = useRef(null);
+
+  // Загружаем последние использованные изображения при монтировании компонента
+  useEffect(() => {
+    const loadLastUsedImages = () => {
+      console.log('🔄 Загружаем последние использованные изображения...');
+      
+      // Загружаем последнее фото пользователя
+      const lastPersonImage = userImageStorage.getLastUsedImage('person');
+      if (lastPersonImage && !uploadedPersonPhoto) {
+        console.log('📸 Найдено последнее фото пользователя:', lastPersonImage);
+        setUploadedPersonPhoto({
+          url: lastPersonImage.url,
+          name: lastPersonImage.name,
+          isProcessed: true,
+          fromStorage: true
+        });
+      }
+
+      // Загружаем последнее фото одежды
+      const lastOutfitImage = userImageStorage.getLastUsedImage('outfit');
+      if (lastOutfitImage && !uploadedOutfitPhoto) {
+        console.log('👕 Найдено последнее фото одежды:', lastOutfitImage);
+        setUploadedOutfitPhoto({
+          url: lastOutfitImage.url,
+          name: lastOutfitImage.name,
+          isProcessed: true,
+          fromStorage: true
+        });
+      }
+    };
+
+    loadLastUsedImages();
+  }, [uploadedPersonPhoto, uploadedOutfitPhoto]); // Добавляем зависимости
 
   const handlePhotoUpload = async (type, event) => {
     const file = event.target.files[0];
-    if (file) {
-      try {
-        // Показываем состояние обработки
+    if (!file) return;
+
         setProcessingStates(prev => ({ ...prev, [type]: true }));
-        
-        console.log(`🔄 Начинаю обработку ${type} изображения:`, file.name);
-        
-        // Конвертация HEIC если необходимо
-        let processedFile = await imageConverter.processImage(file);
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
+    try {
+      const processedFile = await imageConverter.processImage(file);
+      const url = URL.createObjectURL(processedFile);
           const imageData = {
             file: processedFile,
-            originalFile: file,
-            url: e.target.result,
+        url: url,
             name: processedFile.name,
-            isProcessed: processedFile !== file
+        isProcessed: processedFile !== file,
           };
+
+      // Сохраняем изображение в storage
+      const savedImage = userImageStorage.saveImage(imageData, type);
+      if (savedImage) {
+        console.log(`✅ ${type} изображение сохранено в storage:`, savedImage.id);
+      }
           
-          if (type === 'person') {
+      if (type === "person") {
             setUploadedPersonPhoto(imageData);
           } else {
             setUploadedOutfitPhoto(imageData);
           }
-          
-          // Скрываем состояние обработки
-          setProcessingStates(prev => ({ ...prev, [type]: false }));
-        };
-        reader.readAsDataURL(processedFile);
-        
       } catch (error) {
         console.error(`❌ Ошибка обработки ${type} изображения:`, error);
-        
-        // В случае ошибки используем оригинальный файл
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const imageData = {
-            file: file,
-            originalFile: file,
-            url: e.target.result,
-            name: file.name,
-            isProcessed: false
-          };
-          
-          if (type === 'person') {
-            setUploadedPersonPhoto(imageData);
-          } else {
-            setUploadedOutfitPhoto(imageData);
-          }
-          
-          setProcessingStates(prev => ({ ...prev, [type]: false }));
-        };
-        reader.readAsDataURL(file);
+      // Fallback with original file
+      const url = URL.createObjectURL(file);
+      const imageData = { file: file, url: url, name: file.name, isProcessed: false };
+      
+      // Сохраняем изображение в storage (fallback)
+      const savedImage = userImageStorage.saveImage(imageData, type);
+      if (savedImage) {
+        console.log(`✅ ${type} изображение (fallback) сохранено в storage:`, savedImage.id);
       }
+      
+      if (type === "person") setUploadedPersonPhoto(imageData);
+      else setUploadedOutfitPhoto(imageData);
+    } finally {
+          setProcessingStates(prev => ({ ...prev, [type]: false }));
     }
   };
 
   const handleContinue = () => {
     if (uploadedPersonPhoto && uploadedOutfitPhoto) {
-      setIsProcessing(true);
+      onContinue({
+        personImage: uploadedPersonPhoto,
+        outfitImage: uploadedOutfitPhoto,
+      });
     }
   };
 
-  const handleProcessingBack = () => {
-    setIsProcessing(false);
-  };
+  const UploadBox = ({ type, uploadedPhoto, processing, onUploadClick, gradientClass }) => {
+    const isPerson = type === 'person';
+    const title = isPerson ? "Your Photo" : "Outfit Photo";
+    const Icon = isPerson ? User : Shirt;
+    const buttonText = isPerson ? "Upload Your Image" : "Upload Clothing";
 
-  const handleProcessingComplete = (result) => {
-    onContinue(result);
-  };
+    // Адаптируем градиенты для светлой темы
+    const lightThemeGradients = {
+      person: "bg-gradient-to-br from-purple-400 via-pink-400 to-red-400",
+      outfit: "bg-gradient-to-br from-green-400 via-blue-400 to-purple-400"
+    };
 
-  // Если идет обработка, показываем ProcessingPage
-  if (isProcessing) {
     return (
-      <ProcessingPage
-        onBack={handleProcessingBack}
-        onComplete={handleProcessingComplete}
-        tryOnData={{
-          personImage: uploadedPersonPhoto,
-          outfitImage: uploadedOutfitPhoto,
-          timestamp: Date.now()
-        }}
-      />
+      <motion.div
+        className={`rounded-3xl p-6 w-full text-center relative overflow-hidden group ${
+          isDark 
+            ? 'glass-upload-card-dark' 
+            : 'glass-upload-card-light'
+        }`}
+        whileHover={{ scale: 1.02, y: -5, transition: { duration: 0.3 } }}
+      >
+        {uploadedPhoto ? (
+          <div className="relative">
+            <motion.img
+              src={uploadedPhoto.url}
+              alt={title}
+              className="w-full h-48 object-contain rounded-2xl mb-4"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+            />
+            {uploadedPhoto.isProcessed && (
+              <motion.div 
+                className="absolute top-3 right-3 bg-black/30 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-medium flex items-center"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+              >
+                <CheckCircle size={14} className="mr-1 text-green-400" />
+                Optimized
+              </motion.div>
+            )}
+            <h3 className={`font-bold text-xl mb-2 ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}>{title}</h3>
+            <button
+              onClick={onUploadClick}
+              disabled={processing}
+              className={`w-full py-3 rounded-xl font-medium transition-colors touch-manipulation ${
+                isDark 
+                  ? 'bg-black/20 hover:bg-black/40 border border-white/20 text-white' 
+                  : 'bg-white/30 hover:bg-white/50 border border-white/40 text-gray-800'
+              }`}
+            >
+              {processing ? 'Processing...' : 'Change Photo'}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-48">
+             <motion.div
+              className={`w-20 h-20 rounded-full flex items-center justify-center mb-4 border-2 border-dashed transition-colors duration-300 ${
+                isDark 
+                  ? 'bg-black/20 border-white/30 group-hover:border-white/70' 
+                  : 'bg-white/20 border-gray-500/40 group-hover:border-gray-700/60'
+              }`}
+            >
+              {processing ? (
+                <motion.div
+                  className={`w-8 h-8 border-4 border-t-transparent rounded-full ${
+                    isDark ? 'border-white' : 'border-gray-700'
+                  }`}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+              ) : (
+                <Icon size={32} className={`transition-colors duration-300 ${
+                  isDark 
+                    ? 'text-white/70 group-hover:text-white' 
+                    : 'text-gray-600 group-hover:text-gray-800'
+                }`} />
+              )}
+            </motion.div>
+            <h3 className={`font-bold text-xl mb-2 ${
+              isDark ? 'text-white' : 'text-gray-800'
+            }`}>{title}</h3>
+             <button
+              onClick={onUploadClick}
+              disabled={processing}
+              className={`w-full py-3 rounded-xl font-medium transition-colors touch-manipulation mt-4 ${
+                isDark 
+                  ? 'bg-black/20 hover:bg-black/40 border border-white/20 text-white' 
+                  : 'bg-white/30 hover:bg-white/50 border border-white/40 text-gray-800'
+              }`}
+            >
+              {processing ? 'Processing...' : buttonText}
+            </button>
+          </div>
+        )}
+      </motion.div>
     );
-  }
+  };
+  
+  const Examples = () => (
+    <div className="mt-8">
+      <h3 className={`text-xl font-bold mb-4 text-center ${
+        isDark ? 'text-white' : 'text-gray-800'
+      }`}>Examples</h3>
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { src: '/assets/images/modelphoto.png', label: 'Model Photo' },
+          { src: '/assets/images/combination.png', label: 'Combination' },
+          { src: '/assets/images/singleitem.png', label: 'Single Item' },
+        ].map((example, index) => (
+          <div key={index} className="text-center">
+            <img src={example.src} alt={example.label} className="rounded-lg aspect-square object-cover" />
+            <div className="flex items-center justify-center mt-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+              <span className={`text-xs font-medium ${
+                isDark ? 'text-gray-300' : 'text-gray-600'
+              }`}>{example.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-  const GuideModal = () => (
+  return (
+    <div className={`min-h-screen flex flex-col w-full overflow-hidden ${
+      isDark ? 'gradient-bg' : 'gradient-bg-light'
+    }`}>
+        {/* Header with theme adaptation */}
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-lg border-b safe-area-top ${
+              isDark 
+                ? 'bg-gray-900/80 border-gray-700/50' 
+                : 'bg-white/80 border-gray-200'
+            }`}
+        >
+            <div className="max-w-mobile mx-auto px-4 py-3 pt-safe">
+                <div className="flex items-center justify-between">
+                    <motion.button 
+                        onClick={onBack}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isDark 
+                            ? 'bg-gray-700/60 hover:bg-gray-600/80' 
+                            : 'bg-white hover:bg-gray-50 border border-gray-200'
+                        }`}
+                    >
+                        <X size={20} className={isDark ? 'text-gray-200' : 'text-gray-700'} />
+                    </motion.button>
+                    <h1 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Upload Images</h1>
+                    <motion.button 
+                        onClick={() => setShowGuideModal(true)}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isDark 
+                            ? 'bg-gray-700/60 hover:bg-gray-600/80' 
+                            : 'bg-white hover:bg-gray-50 border border-gray-200'
+                        }`}
+                    >
+                        <HelpCircle size={20} className={isDark ? 'text-gray-200' : 'text-gray-700'} />
+                    </motion.button>
+                </div>
+            </div>
+        </motion.div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto pt-24 pb-40 px-4">
+            <div className="max-w-mobile mx-auto">
+                <div className="space-y-6">
+                    <UploadBox
+                        type="person"
+                        uploadedPhoto={uploadedPersonPhoto}
+                        processing={processingStates.person}
+                        onUploadClick={() => personInputRef.current?.click()}
+                        gradientClass="bg-gradient-to-br from-indigo-500 to-purple-600"
+                    />
+                    <div className="flex justify-center">
+                        <ChevronDown size={24} className={isDark ? 'text-gray-500' : 'text-gray-400'} />
+                    </div>
+                    <UploadBox
+                        type="outfit"
+                        uploadedPhoto={uploadedOutfitPhoto}
+                        processing={processingStates.outfit}
+                        onUploadClick={() => outfitInputRef.current?.click()}
+                        gradientClass="bg-gradient-to-r from-neon-green to-teal-400"
+                    />
+                </div>
+                {!uploadedOutfitPhoto && <Examples />}
+            </div>
+        </div>
+
+        {/* Hidden file inputs */}
+        <input id="person-upload" ref={personInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload('person', e)} className="hidden" />
+        <input id="outfit-upload" ref={outfitInputRef} type="file" accept="image/*" onChange={(e) => handlePhotoUpload('outfit', e)} className="hidden" />
+        
+        {/* Footer with theme adaptation */}
+        <motion.div 
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+            className={`fixed bottom-0 left-0 right-0 backdrop-blur-lg border-t pb-safe z-50 ${
+              isDark 
+                ? 'bg-gray-900/90 border-gray-700/50' 
+                : 'bg-white/90 border-gray-200'
+            }`}
+            style={{ position: 'fixed', bottom: 0, left: 0, right: 0 }}
+        >
+            <div className="max-w-mobile mx-auto px-4 py-4">
+                <motion.button
+                    onClick={() => {
+                      console.log('Next button clicked', { uploadedPersonPhoto, uploadedOutfitPhoto, processingStates });
+                      handleContinue();
+                    }}
+                    disabled={!uploadedPersonPhoto || !uploadedOutfitPhoto || processingStates.person || processingStates.outfit}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
+                      uploadedPersonPhoto && uploadedOutfitPhoto && !processingStates.person && !processingStates.outfit
+                        ? isDark 
+                          ? 'bg-gradient-to-r from-neon-green to-teal-400 text-white cursor-pointer'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white cursor-pointer shadow-lg'
+                        : isDark
+                          ? 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                >
+                    Next
+                </motion.button>
+            </div>
+        </motion.div>
+
+        {/* Guide Modal */}
     <AnimatePresence>
       {showGuideModal && (
         <motion.div
@@ -126,12 +363,14 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
               {/* Drag indicator */}
               <div className="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">Гайд по фотосъемке</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      Гайд по фотосъемке
+                    </h2>
                 <button 
                   onClick={() => setShowGuideModal(false)}
-                  className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
+                  className="w-10 h-10 bg-white-100 rounded-full flex items-center justify-center touch-manipulation"
                 >
-                  <X size={18} className="text-gray-600" />
+                  <X size={18} className="text-gray-800" />
                 </button>
               </div>
             </div>
@@ -141,11 +380,15 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
               <div className="space-y-6">
                 {/* Фото человека */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Ваше фото</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Ваше фото
+                      </h3>
                   <div className="space-y-3">
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Снимайте в полный рост или по пояс</p>
+                          <p className="text-sm text-gray-700">
+                            Снимайте в полный рост или по пояс
+                          </p>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
@@ -157,37 +400,51 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Стойте прямо, руки по бокам</p>
+                          <p className="text-sm text-gray-700">
+                            Стойте прямо, руки по бокам
+                          </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Фото одежды */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Фото одежды</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Фото одежды
+                      </h3>
                   <div className="space-y-3">
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Одежда должна быть хорошо видна</p>
+                          <p className="text-sm text-gray-700">
+                            Одежда должна быть хорошо видна
+                          </p>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Можно снимать на вешалке или модели</p>
+                          <p className="text-sm text-gray-700">
+                            Можно снимать на вешалке или модели
+                          </p>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Избегайте складок и теней</p>
+                          <p className="text-sm text-gray-700">
+                            Избегайте складок и теней
+                          </p>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                      <p className="text-sm text-gray-700">Нейтральный фон предпочтителен</p>
+                          <p className="text-sm text-gray-700">
+                            Нейтральный фон предпочтителен
+                          </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Примеры */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Примеры</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Примеры
+                      </h3>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="text-center">
                       <div className="bg-gray-100 rounded-lg h-16 flex items-center justify-center mb-1">
@@ -215,195 +472,6 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
         </motion.div>
       )}
     </AnimatePresence>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Safe area для iPhone 14 Pro с Dynamic Island */}
-      <div className="pt-safe-top pb-safe-bottom">
-        <div className="flex flex-col h-screen">
-          {/* Header с учетом Dynamic Island */}
-          <div className="px-4 py-3 bg-white mt-2">
-            <div className="flex items-center justify-between">
-              <button 
-                onClick={onBack}
-                className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
-              >
-                <X size={20} className="text-gray-600" />
-              </button>
-              
-              <h1 className="text-lg font-semibold text-gray-900">Clothing Pairing</h1>
-              
-              <button 
-                onClick={() => setShowGuideModal(true)}
-                className="w-11 h-11 bg-gray-100 rounded-full flex items-center justify-center touch-manipulation"
-              >
-                <HelpCircle size={20} className="text-gray-600" />
-              </button>
-            </div>
-          </div>
-
-          {/* Scrollable content area */}
-          <div className="flex-1 overflow-y-auto px-4 py-2">
-            <div className="w-full max-w-sm mx-auto space-y-4">
-              {/* Your Photo Section */}
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="px-4 py-4">
-                  {uploadedPersonPhoto ? (
-                    <div className="relative">
-                      <img 
-                        src={uploadedPersonPhoto.url} 
-                        alt="Uploaded portrait" 
-                        className="w-full h-40 object-contain rounded-xl mb-3 bg-gray-50"
-                      />
-                      {/* Индикатор обработки HEIC */}
-                      {uploadedPersonPhoto.isProcessed && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                          ✓ HEIC → JPG
-                        </div>
-                      )}
-                      <div className="text-center mb-3">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Photo</h2>
-                      </div>
-                      <button
-                        onClick={() => document.getElementById('person-upload').click()}
-                        className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
-                        disabled={processingStates.person}
-                      >
-                        {processingStates.person ? 'Обрабатываю...' : 'Change photo'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="text-center mb-4">
-                        <div className="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                          {processingStates.person ? (
-                            <motion.div
-                              className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                          ) : (
-                            <User size={32} className="text-gray-400" />
-                          )}
-                        </div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Your Photo</h2>
-                        <p className="text-gray-500 text-sm">Take a selfie or upload from gallery</p>
-                      </div>
-
-                      <button
-                        onClick={() => document.getElementById('person-upload').click()}
-                        className="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors font-medium touch-manipulation"
-                        disabled={processingStates.person}
-                      >
-                        {processingStates.person ? 'Обрабатываю...' : 'Tap to upload photo'}
-                      </button>
-                    </div>
-                  )}
-
-                  <input
-                    id="person-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload('person', e)}
-                    className="hidden"
-                    disabled={processingStates.person}
-                  />
-                </div>
-              </div>
-              
-              {/* Arrow pointing down */}
-              <div className="flex justify-center py-1">
-                <ChevronDown size={16} className="text-gray-400" />
-              </div>
-
-              {/* Upload Outfit Section */}
-              <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="px-4 py-4">
-                  {uploadedOutfitPhoto ? (
-                    <div className="text-center">
-                      <div className="relative inline-block">
-                        <img 
-                          src={uploadedOutfitPhoto.url} 
-                          alt="Outfit" 
-                          className="w-28 h-28 object-contain rounded-xl mx-auto mb-3 bg-gray-50"
-                        />
-                        {/* Индикатор обработки HEIC */}
-                        {uploadedOutfitPhoto.isProcessed && (
-                          <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded-full font-medium">
-                            ✓
-                          </div>
-                        )}
-                      </div>
-                      <h2 className="text-lg font-semibold text-gray-900 mb-1">Upload Outfit Image</h2>
-                      <p className="text-gray-500 text-sm mb-3">Choose clothing item or complete outfit to try on</p>
-                      <button
-                        onClick={() => document.getElementById('outfit-upload').click()}
-                        className="w-full py-3 bg-gray-50 rounded-xl text-gray-600 text-sm font-medium hover:bg-gray-100 transition-colors touch-manipulation"
-                        disabled={processingStates.outfit}
-                      >
-                        {processingStates.outfit ? 'Обрабатываю...' : 'Change outfit'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-green-400 rounded-xl p-6 bg-green-50">
-                      <div className="text-center">
-                        <div className="w-14 h-14 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-3">
-                          {processingStates.outfit ? (
-                            <motion.div
-                              className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                          ) : (
-                            <Plus size={20} className="text-white" />
-                          )}
-                        </div>
-                        <h2 className="text-lg font-semibold text-gray-900 mb-1">Upload Outfit Image</h2>
-                        <p className="text-gray-500 text-sm mb-4">Choose clothing item or complete outfit to try on</p>
-                        <button
-                          onClick={() => document.getElementById('outfit-upload').click()}
-                          className="w-full py-3 bg-white border border-green-400 rounded-xl text-green-600 font-medium hover:bg-green-50 transition-colors touch-manipulation"
-                          disabled={processingStates.outfit}
-                        >
-                          {processingStates.outfit ? 'Обрабатываю...' : 'Choose from gallery'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <input
-                    id="outfit-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handlePhotoUpload('outfit', e)}
-                    className="hidden"
-                    disabled={processingStates.outfit}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Fixed bottom section with Next button */}
-          <div className="px-4 py-4 bg-white border-t border-gray-100">
-            <button
-              onClick={handleContinue}
-              disabled={!uploadedPersonPhoto || !uploadedOutfitPhoto || processingStates.person || processingStates.outfit}
-              className={`w-full py-4 rounded-2xl font-semibold text-lg transition-all touch-manipulation ${
-                uploadedPersonPhoto && uploadedOutfitPhoto && !processingStates.person && !processingStates.outfit
-                  ? 'bg-gray-900 text-white hover:bg-gray-800' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Guide Modal */}
-      <GuideModal />
     </div>
   );
 };

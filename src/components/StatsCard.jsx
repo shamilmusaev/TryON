@@ -1,13 +1,17 @@
-import { motion } from 'framer-motion';
-import { TrendingUp, Users } from 'lucide-react';
+import { motion } from "framer-motion";
+import { TrendingUp, Users } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const StatsCard = ({ stats, userRecentTryOns }) => {
+  const { isDark } = useTheme();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="glassmorphism rounded-2xl p-6 mb-6"
+      className={`rounded-2xl p-6 mb-6 transition-all duration-300 ${
+        isDark ? 'glass-card-dark' : 'glass-card-light'
+      }`}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -15,10 +19,14 @@ const StatsCard = ({ stats, userRecentTryOns }) => {
             <TrendingUp className="w-5 h-5 text-neon-green" />
           </div>
           <div>
-            <h3 className="text-white font-semibold text-lg">
+            <h3 className={`font-semibold text-lg transition-colors duration-300 ${
+              isDark ? 'text-white' : 'text-primary-light'
+            }`}>
               {stats.totalTryOns} AI Try-Ons Completed
             </h3>
-            <p className="text-gray-400 text-sm">This week +12</p>
+            <p className={`text-sm transition-colors duration-300 ${
+              isDark ? 'text-gray-400' : 'text-secondary-light'
+            }`}>This week +12</p>
           </div>
         </div>
       </div>
@@ -34,23 +42,33 @@ const StatsCard = ({ stats, userRecentTryOns }) => {
                 transition={{ delay: 0.4 + index * 0.1 }}
                 src={avatar}
                 alt={`Try-on ${index + 1}`}
-                className="w-8 h-8 rounded-full border-2 border-gray-700 object-cover"
+                className={`w-8 h-8 rounded-full border-2 object-cover transition-colors duration-300 ${
+                  isDark ? 'border-gray-700' : 'border-white'
+                }`}
               />
             ))}
           </div>
           <div className="flex items-center space-x-1 ml-3">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-gray-400 text-sm">Recent styles</span>
+            <Users className={`w-4 h-4 transition-colors duration-300 ${
+              isDark ? 'text-gray-400' : 'text-secondary-light'
+            }`} />
+            <span className={`text-sm transition-colors duration-300 ${
+              isDark ? 'text-gray-400' : 'text-secondary-light'
+            }`}>Recent styles</span>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="text-neon-green font-bold text-sm">95% match rate</div>
-          <div className="text-gray-500 text-xs">AI accuracy</div>
+          <div className="text-neon-green font-bold text-sm">
+            95% match rate
+          </div>
+          <div className={`text-xs transition-colors duration-300 ${
+            isDark ? 'text-gray-500' : 'text-secondary-light'
+          }`}>AI accuracy</div>
         </div>
       </div>
     </motion.div>
   );
 };
 
-export default StatsCard; 
+export default StatsCard;

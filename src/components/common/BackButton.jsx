@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { motion } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 
-const BackButton = ({ onClick, className = '' }) => {
+const BackButton = ({ onClick, className = "" }) => {
   return (
     <motion.button
       onClick={onClick}
@@ -22,4 +22,4 @@ const BackButton = ({ onClick, className = '' }) => {
   );
 };
 
-export default BackButton; 
+export default BackButton;

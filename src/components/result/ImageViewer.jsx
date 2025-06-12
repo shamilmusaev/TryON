@@ -1,10 +1,10 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 const ImageViewer = ({ images = [], currentIndex = 0, onSwipe }) => {
   const currentImage = images[currentIndex];
-  
+
   return (
-    <motion.div 
+    <motion.div
       className="relative w-full h-96 bg-gray-900 rounded-2xl overflow-hidden"
       layoutId="image-viewer"
     >
@@ -28,7 +28,7 @@ const ImageViewer = ({ images = [], currentIndex = 0, onSwipe }) => {
           </div>
         </div>
       )}
-      
+
       {/* Navigation dots */}
       {images.length > 1 && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
@@ -36,7 +36,7 @@ const ImageViewer = ({ images = [], currentIndex = 0, onSwipe }) => {
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex ? 'bg-neon-green' : 'bg-white/50'
+                index === currentIndex ? "bg-neon-green" : "bg-white/50"
               }`}
               onClick={() => onSwipe?.(index)}
             />
@@ -47,4 +47,4 @@ const ImageViewer = ({ images = [], currentIndex = 0, onSwipe }) => {
   );
 };
 
-export default ImageViewer; 
+export default ImageViewer;

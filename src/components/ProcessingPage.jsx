@@ -1,20 +1,20 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, RotateCcw } from 'lucide-react';
-import anime from 'animejs';
-import replicateService from '../services/replicate'; // ACTIVATED FOR PRODUCTION
-import Logo from './common/Logo';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, RotateCcw } from "lucide-react";
+import anime from "animejs";
+import replicateService from "../services/replicate"; // ACTIVATED FOR PRODUCTION
+import Logo from "./common/Logo";
 
 const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   const [progress, setProgress] = useState(0);
-  const [processingStatus, setProcessingStatus] = useState('starting');
+  const [processingStatus, setProcessingStatus] = useState("starting");
   const [predictionId, setPredictionId] = useState(null);
   const [error, setError] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [lowResBlurImage, setLowResBlurImage] = useState(null);
-  
+
   // Refs для anime.js
   const blurOverlayRef = useRef(null);
   const containerRef = useRef(null);
@@ -22,40 +22,40 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
 
   // Отладочный лог для проверки данных
   useEffect(() => {
-    console.log('🔍 ProcessingPage tryOnData:', tryOnData);
+    console.log("🔍 ProcessingPage tryOnData:", tryOnData);
   }, [tryOnData]);
 
   // Определяем isGenerating здесь, до useEffect'ов
-  const isGenerating = !isCompleted && processingStatus !== 'failed' && !error;
+  const isGenerating = !isCompleted && processingStatus !== "failed" && !error;
 
   // Создание низкоразрешенной версии изображения для blur-заглушки
   const createLowResBlurImage = useCallback((imageUrl) => {
     return new Promise((resolve) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
-      
+      img.crossOrigin = "anonymous";
+
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
         // Устанавливаем очень маленькое разрешение (15px)
         const lowResSize = 15;
         canvas.width = lowResSize;
         canvas.height = lowResSize;
-        
+
         // Рисуем изображение в маленьком разрешении
         ctx.drawImage(img, 0, 0, lowResSize, lowResSize);
-        
+
         // Получаем data URL низкоразрешенной версии
-        const lowResDataUrl = canvas.toDataURL('image/jpeg', 0.5);
+        const lowResDataUrl = canvas.toDataURL("image/jpeg", 0.5);
         resolve(lowResDataUrl);
       };
-      
+
       img.onerror = () => {
         // Если не удалось загрузить, используем оригинал
         resolve(imageUrl);
       };
-      
+
       img.src = imageUrl;
     });
   }, []);
@@ -63,57 +63,56 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   // Создаем blur-версию при загрузке данных
   useEffect(() => {
     if (tryOnData?.personImage?.url && !lowResBlurImage) {
-      createLowResBlurImage(tryOnData.personImage.url)
-        .then(setLowResBlurImage);
+      createLowResBlurImage(tryOnData.personImage.url).then(setLowResBlurImage);
     }
   }, [tryOnData, createLowResBlurImage, lowResBlurImage]);
 
   const handleSuccess = useCallback((result) => {
-    console.log('✅ Try-on generation completed:', result);
-    
+    console.log("✅ Try-on generation completed:", result);
+
     setProgress(100);
-    setProcessingStatus('completed');
+    setProcessingStatus("completed");
     setGeneratedImage(result.output);
     setIsCompleted(true);
-    
+
     // Быстро завершаем blur анимацию за 2 секунды
     if (blurOverlayRef.current) {
-      console.log('🚀 Быстро завершаю blur анимацию...');
-      
+      console.log("🚀 Быстро завершаю blur анимацию...");
+
       // Останавливаем текущую анимацию
       anime.remove(blurOverlayRef.current);
-      
+
       // Запускаем быстрое завершение
       anime({
         targets: blurOverlayRef.current,
-        translateY: '100%', // Доезжаем до конца
+        translateY: "100%", // Доезжаем до конца
         duration: 2000, // 2 секунды
-        easing: 'easeOutQuart', // Плавное замедление
+        easing: "easeOutQuart", // Плавное замедление
         complete: () => {
           // Скрываем overlay после завершения
           if (blurOverlayRef.current) {
-            blurOverlayRef.current.style.display = 'none';
+            blurOverlayRef.current.style.display = "none";
           }
-        }
+        },
       });
     }
   }, []);
 
   const handleError = useCallback((error) => {
-    console.error('❌ Try-on generation failed:', error);
-    setError(error.message || 'Generation failed');
-    setProcessingStatus('failed');
+    console.error("❌ Try-on generation failed:", error);
+    setError(error.message || "Generation failed");
+    setProcessingStatus("failed");
     setIsCompleted(true);
   }, []);
 
   // Запуск blur анимации и движения placeholder
   useEffect(() => {
     if (blurOverlayRef.current && isGenerating && !isCompleted) {
-      console.log('🎬 Начинаю blur анимацию при старте генерации...');
-      
+      console.log("🎬 Начинаю blur анимацию при старте генерации...");
+
       // Устанавливаем начальную позицию
-      blurOverlayRef.current.style.transform = 'translateY(0%)';
-      blurOverlayRef.current.style.display = 'block';
+      blurOverlayRef.current.style.transform = "translateY(0%)";
+      blurOverlayRef.current.style.display = "block";
     }
 
     // Анимация движения placeholder под blur
@@ -123,27 +122,34 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
         scale: [1, 1.05, 1],
         rotate: [0, 2, -2, 0],
         duration: 3000,
-        easing: 'easeInOutSine',
-        loop: true
+        easing: "easeInOutSine",
+        loop: true,
       });
     }
   }, [isGenerating, isCompleted]);
 
   // Обновляем позицию blur overlay с плавными переходами
   useEffect(() => {
-    if (blurOverlayRef.current && isGenerating && progress > 0 && !isCompleted) {
+    if (
+      blurOverlayRef.current &&
+      isGenerating &&
+      progress > 0 &&
+      !isCompleted
+    ) {
       // Более плавное движение blur с easing
       const blurPosition = Math.min(progress * 0.85, 85); // Ограничиваем до 85%
-      
+
       // Используем anime.js для плавного перехода
       anime({
         targets: blurOverlayRef.current,
         translateY: `${blurPosition}%`,
         duration: 800, // Более быстрые переходы
-        easing: 'easeOutQuart', // Плавное замедление
+        easing: "easeOutQuart", // Плавное замедление
         complete: () => {
-          console.log(`🎬 Blur позиция обновлена: ${blurPosition}% (прогресс генерации: ${progress}%)`);
-        }
+          console.log(
+            `🎬 Blur позиция обновлена: ${blurPosition}% (прогресс генерации: ${progress}%)`,
+          );
+        },
       });
     }
   }, [progress, isGenerating, isCompleted]);
@@ -151,39 +157,41 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   // PRODUCTION REPLICATE CODE - USES OPTIMIZED IMAGES
   const startGeneration = useCallback(async () => {
     try {
-      console.log('🚀 Starting try-on generation...');
+      console.log("🚀 Starting try-on generation...");
       setError(null);
       setGeneratedImage(null);
       setProgress(0);
-      setProcessingStatus('starting');
+      setProcessingStatus("starting");
       setIsCompleted(false);
-      
+
       // Используем оптимизированные изображения (уже обработанные оптимизатором iPhone)
       const generation = await replicateService.generateTryOn(
         tryOnData.personImage, // Уже оптимизированное изображение
         tryOnData.outfitImage, // Уже оптимизированное изображение
-        'stylish outfit'
+        "stylish outfit",
       );
 
       setPredictionId(generation.id);
-      setProcessingStatus('generating');
-      
+      setProcessingStatus("generating");
+
       // Ожидаем завершения с отслеживанием прогресса
-      generation.wait((newProgress) => {
-        console.log('Generation progress:', newProgress);
-        setProgress(newProgress);
-        
-        // Обновляем статус на основе прогресса
-        if (newProgress <= 25) {
-          setProcessingStatus('analyzing');
-        } else if (newProgress <= 75) {
-          setProcessingStatus('generating');
-        } else if (newProgress < 100) {
-          setProcessingStatus('finalizing');
-        }
-        // При 100% handleSuccess установит completed и isCompleted = true
-      }).then(handleSuccess).catch(handleError);
-      
+      generation
+        .wait((newProgress) => {
+          console.log("Generation progress:", newProgress);
+          setProgress(newProgress);
+
+          // Обновляем статус на основе прогресса
+          if (newProgress <= 25) {
+            setProcessingStatus("analyzing");
+          } else if (newProgress <= 75) {
+            setProcessingStatus("generating");
+          } else if (newProgress < 100) {
+            setProcessingStatus("finalizing");
+          }
+          // При 100% handleSuccess установит completed и isCompleted = true
+        })
+        .then(handleSuccess)
+        .catch(handleError);
     } catch (error) {
       handleError(error);
     }
@@ -227,19 +235,19 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
           x: Math.random() * 300,
           y: Math.random() * 300,
           opacity: 0,
-          scale: 0
+          scale: 0,
         }}
         animate={{
           x: Math.random() * 300,
           y: Math.random() * 300,
           opacity: [0, 0.8, 0],
-          scale: [0, 1, 0]
+          scale: [0, 1, 0],
         }}
         transition={{
           duration: 3 + Math.random() * 2,
           repeat: Infinity,
           delay: Math.random() * 2,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
       />
     ));
@@ -258,7 +266,10 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
           </div>
 
           {/* Главный контейнер для генерации */}
-          <div className="flex-1 flex items-center justify-center p-4 relative" style={{ minHeight: 'calc(100vh - 320px)' }}>
+          <div
+            className="flex-1 flex items-center justify-center p-4 relative"
+            style={{ minHeight: "calc(100vh - 320px)" }}
+          >
             {/* Превью одежды в маленьком окошке справа - только во время генерации */}
             {isGenerating && tryOnData?.outfitImage?.url && (
               <motion.div
@@ -272,6 +283,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                   alt="Outfit preview"
                   className="w-full h-full object-cover"
                 />
+
                 <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-1">
                   Outfit
                 </div>
@@ -294,7 +306,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                     alt="Blurred preview"
                     className="w-full h-full object-cover"
                     style={{
-                      filter: 'blur(20px) brightness(1.1)',
+                      filter: "blur(20px) brightness(1.1)",
                     }}
                   />
                 )}
@@ -307,11 +319,11 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
 
               {/* Градиентный оверлей для дополнительного размытия во время генерации */}
               {isGenerating && (
-                <div 
+                <div
                   className="absolute inset-0 z-5"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    backdropFilter: 'blur(5px)',
+                    background: "rgba(255, 255, 255, 0.1)",
+                    backdropFilter: "blur(5px)",
                   }}
                 />
               )}
@@ -338,11 +350,12 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                   ref={blurOverlayRef}
                   className="absolute inset-0 pointer-events-none z-10"
                   style={{
-                    background: 'linear-gradient(180deg, rgba(240,240,240,0.98) 0%, rgba(240,240,240,0.95) 5%, rgba(240,240,240,0.9) 15%, rgba(240,240,240,0.7) 30%, rgba(240,240,240,0.4) 50%, rgba(240,240,240,0.2) 70%, rgba(240,240,240,0.05) 85%, transparent 95%)',
-                    backdropFilter: 'blur(25px)',
-                    WebkitBackdropFilter: 'blur(25px)',
-                    transform: 'translateY(0%)', // Начальная позиция
-                    display: 'block'
+                    background:
+                      "linear-gradient(180deg, rgba(240,240,240,0.98) 0%, rgba(240,240,240,0.95) 5%, rgba(240,240,240,0.9) 15%, rgba(240,240,240,0.7) 30%, rgba(240,240,240,0.4) 50%, rgba(240,240,240,0.2) 70%, rgba(240,240,240,0.05) 85%, transparent 95%)",
+                    backdropFilter: "blur(25px)",
+                    WebkitBackdropFilter: "blur(25px)",
+                    transform: "translateY(0%)", // Начальная позиция
+                    display: "block",
                   }}
                 />
               )}
@@ -359,7 +372,9 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                 <div className="absolute inset-0 flex items-center justify-center bg-red-50/95 backdrop-blur-sm z-20">
                   <div className="text-center p-6">
                     <div className="text-4xl mb-3">⚠️</div>
-                    <p className="text-red-600 font-medium mb-4">Generation Failed</p>
+                    <p className="text-red-600 font-medium mb-4">
+                      Generation Failed
+                    </p>
                     <p className="text-gray-600 text-sm mb-4">{error}</p>
                   </div>
                 </div>
@@ -373,7 +388,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
             {isGenerating && (
               <div className="text-center mb-4">
                 <AnimatePresence mode="wait">
-                  {processingStatus === 'starting' && (
+                  {processingStatus === "starting" && (
                     <motion.p
                       key="starting"
                       initial={{ opacity: 0, y: 10 }}
@@ -384,7 +399,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                       Preparing AI model...
                     </motion.p>
                   )}
-                  {processingStatus === 'analyzing' && (
+                  {processingStatus === "analyzing" && (
                     <motion.p
                       key="analyzing"
                       initial={{ opacity: 0, y: 10 }}
@@ -395,7 +410,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                       Analyzing images...
                     </motion.p>
                   )}
-                  {processingStatus === 'generating' && (
+                  {processingStatus === "generating" && (
                     <motion.p
                       key="generating"
                       initial={{ opacity: 0, y: 10 }}
@@ -411,7 +426,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                       )}
                     </motion.p>
                   )}
-                  {processingStatus === 'finalizing' && (
+                  {processingStatus === "finalizing" && (
                     <motion.p
                       key="finalizing"
                       initial={{ opacity: 0, y: 10 }}
@@ -445,8 +460,8 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                 disabled={isGenerating}
                 className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
                   isGenerating
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-gray-800 text-white hover:bg-gray-900'
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-800 text-white hover:bg-gray-900"
                 }`}
                 whileHover={!isGenerating ? { scale: 1.02 } : {}}
                 whileTap={!isGenerating ? { scale: 0.98 } : {}}
@@ -461,14 +476,18 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                 disabled={isGenerating}
                 className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
                   isGenerating
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
                 }`}
                 whileHover={!isGenerating ? { scale: 1.02 } : {}}
                 whileTap={!isGenerating ? { scale: 0.98 } : {}}
               >
-                <RotateCcw size={16} className={isRetrying ? 'animate-spin' : ''} />
-                <span>{isRetrying ? 'Retrying...' : 'Try Again'}</span>
+                <RotateCcw
+                  size={16}
+                  className={isRetrying ? "animate-spin" : ""}
+                />
+
+                <span>{isRetrying ? "Retrying..." : "Try Again"}</span>
               </motion.button>
 
               {/* Add to Library Button - показана только после завершения */}
@@ -478,7 +497,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                   animate={{ opacity: 1, scale: 1 }}
                   onClick={() => {
                     // Здесь будет логика добавления в библиотеку
-                    console.log('Adding to library...');
+                    console.log("Adding to library...");
                   }}
                   className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-all touch-manipulation"
                   whileHover={{ scale: 1.02 }}
@@ -496,4 +515,4 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   );
 };
 
-export default ProcessingPage; 
+export default ProcessingPage;

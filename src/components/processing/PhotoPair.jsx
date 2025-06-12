@@ -1,11 +1,11 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
-const PhotoPair = ({ 
-  personPhoto, 
-  clothingPhoto, 
+const PhotoPair = ({
+  personPhoto,
+  clothingPhoto,
   isAnimating = true,
-  className = '' 
+  className = "",
 }) => {
   return (
     <div className={`flex justify-center items-center ${className}`}>
@@ -28,27 +28,27 @@ const PhotoPair = ({
                 <div className="text-2xl">👤</div>
               </div>
             )}
-            
+
             {/* Animated border */}
             {isAnimating && (
               <motion.div
                 className="absolute inset-0 border-2 border-green-400 rounded-xl"
                 animate={{
                   boxShadow: [
-                    '0 0 8px rgba(34, 197, 94, 0.3)',
-                    '0 0 16px rgba(34, 197, 94, 0.6)',
-                    '0 0 8px rgba(34, 197, 94, 0.3)'
-                  ]
+                    "0 0 8px rgba(34, 197, 94, 0.3)",
+                    "0 0 16px rgba(34, 197, 94, 0.6)",
+                    "0 0 8px rgba(34, 197, 94, 0.3)",
+                  ],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
             )}
           </div>
-          
+
           {/* Label */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -68,14 +68,18 @@ const PhotoPair = ({
           className="flex items-center justify-center"
         >
           <motion.div
-            animate={isAnimating ? {
-              rotate: [0, 180, 360],
-              scale: [1, 1.2, 1]
-            } : {}}
+            animate={
+              isAnimating
+                ? {
+                    rotate: [0, 180, 360],
+                    scale: [1, 1.2, 1],
+                  }
+                : {}
+            }
             transition={{
               duration: 3,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
             className="w-8 h-8 rounded-full bg-purple-500/20 border-2 border-purple-400 flex items-center justify-center"
           >
@@ -101,28 +105,28 @@ const PhotoPair = ({
                 <div className="text-2xl">👕</div>
               </div>
             )}
-            
+
             {/* Animated border */}
             {isAnimating && (
               <motion.div
                 className="absolute inset-0 border-2 border-orange-400 rounded-xl"
                 animate={{
                   boxShadow: [
-                    '0 0 8px rgba(251, 146, 60, 0.3)',
-                    '0 0 16px rgba(251, 146, 60, 0.6)',
-                    '0 0 8px rgba(251, 146, 60, 0.3)'
-                  ]
+                    "0 0 8px rgba(251, 146, 60, 0.3)",
+                    "0 0 16px rgba(251, 146, 60, 0.6)",
+                    "0 0 8px rgba(251, 146, 60, 0.3)",
+                  ],
                 }}
                 transition={{
                   duration: 2,
                   repeat: Infinity,
                   ease: "easeInOut",
-                  delay: 0.5
+                  delay: 0.5,
                 }}
               />
             )}
           </div>
-          
+
           {/* Label */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -130,7 +134,9 @@ const PhotoPair = ({
             transition={{ delay: 0.4 }}
             className="text-center mt-2"
           >
-            <div className="text-orange-400 text-xs font-medium">Clothing Item</div>
+            <div className="text-orange-400 text-xs font-medium">
+              Clothing Item
+            </div>
           </motion.div>
         </motion.div>
 
@@ -138,23 +144,44 @@ const PhotoPair = ({
         {isAnimating && (
           <div className="absolute inset-0 pointer-events-none">
             {/* Energy particles flowing between photos */}
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 100">
+            <svg
+              className="absolute inset-0 w-full h-full"
+              viewBox="0 0 200 100"
+            >
               <defs>
-                <linearGradient id="flow-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style={{ stopColor: '#22C55E', stopOpacity: 0.8 }} />
-                  <stop offset="50%" style={{ stopColor: '#8B5CF6', stopOpacity: 1 }} />
-                  <stop offset="100%" style={{ stopColor: '#FB923C', stopOpacity: 0.8 }} />
+                <linearGradient
+                  id="flow-gradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop
+                    offset="0%"
+                    style={{ stopColor: "#22C55E", stopOpacity: 0.8 }}
+                  />
+
+                  <stop
+                    offset="50%"
+                    style={{ stopColor: "#8B5CF6", stopOpacity: 1 }}
+                  />
+
+                  <stop
+                    offset="100%"
+                    style={{ stopColor: "#FB923C", stopOpacity: 0.8 }}
+                  />
                 </linearGradient>
-                
+
                 <filter id="glow-effect">
-                  <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                  <feMerge> 
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
+                  <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
               </defs>
-              
+
               {/* Flowing energy line */}
               <motion.path
                 d="M 40 50 Q 100 30 160 50"
@@ -163,17 +190,17 @@ const PhotoPair = ({
                 fill="none"
                 filter="url(#glow-effect)"
                 initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ 
+                animate={{
                   pathLength: [0, 1, 0],
-                  opacity: [0, 0.7, 0]
+                  opacity: [0, 0.7, 0],
                 }}
                 transition={{
                   duration: 2.5,
                   repeat: Infinity,
-                  ease: "easeInOut"
+                  ease: "easeInOut",
                 }}
               />
-              
+
               {/* Energy dots */}
               {[...Array(2)].map((_, i) => (
                 <motion.circle
@@ -182,13 +209,13 @@ const PhotoPair = ({
                   fill="#8B5CF6"
                   filter="url(#glow-effect)"
                   initial={{ opacity: 0 }}
-                  animate={{ 
+                  animate={{
                     opacity: [0, 1, 0],
                   }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
-                    delay: i * 0.8
+                    delay: i * 0.8,
                   }}
                 >
                   <animateMotion
@@ -207,4 +234,4 @@ const PhotoPair = ({
   );
 };
 
-export default PhotoPair; 
+export default PhotoPair;

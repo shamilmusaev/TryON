@@ -1,13 +1,13 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
 const Card = ({
   children,
   title,
   subtitle,
   icon,
-  variant = 'default',
-  className = '',
+  variant = "default",
+  className = "",
   onClick,
   isHoverable = false,
   glowEffect = false,
@@ -15,35 +15,35 @@ const Card = ({
 }) => {
   const getVariantStyles = () => {
     switch (variant) {
-      case 'premium':
-        return 'bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30';
-      case 'success':
-        return 'bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30';
-      case 'warning':
-        return 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/30';
-      case 'error':
-        return 'bg-gradient-to-br from-red-500/10 to-pink-500/10 border-red-500/30';
-      case 'glass':
-        return 'bg-white/5 backdrop-blur-sm border-white/10';
+      case "premium":
+        return "bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/30";
+      case "success":
+        return "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30";
+      case "warning":
+        return "bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border-yellow-500/30";
+      case "error":
+        return "bg-gradient-to-br from-red-500/10 to-pink-500/10 border-red-500/30";
+      case "glass":
+        return "bg-white/5 backdrop-blur-sm border-white/10";
       default:
-        return 'bg-gray-900/50 border-gray-700';
+        return "bg-gray-900/50 border-gray-700";
     }
   };
 
   const getGlowStyles = () => {
-    if (!glowEffect) return '';
-    
+    if (!glowEffect) return "";
+
     switch (variant) {
-      case 'premium':
-        return 'shadow-lg shadow-purple-500/20';
-      case 'success':
-        return 'shadow-lg shadow-green-500/20';
-      case 'warning':
-        return 'shadow-lg shadow-yellow-500/20';
-      case 'error':
-        return 'shadow-lg shadow-red-500/20';
+      case "premium":
+        return "shadow-lg shadow-purple-500/20";
+      case "success":
+        return "shadow-lg shadow-green-500/20";
+      case "warning":
+        return "shadow-lg shadow-yellow-500/20";
+      case "error":
+        return "shadow-lg shadow-red-500/20";
       default:
-        return 'shadow-lg shadow-gray-500/20';
+        return "shadow-lg shadow-gray-500/20";
     }
   };
 
@@ -58,8 +58,8 @@ const Card = ({
         relative p-6 rounded-2xl border transition-all duration-300
         ${getVariantStyles()}
         ${getGlowStyles()}
-        ${isHoverable ? 'hover:border-opacity-50 cursor-pointer' : ''}
-        ${onClick ? 'focus:outline-none focus:ring-2 focus:ring-purple-500/50' : ''}
+        ${isHoverable ? "hover:border-opacity-50 cursor-pointer" : ""}
+        ${onClick ? "focus:outline-none focus:ring-2 focus:ring-purple-500/50" : ""}
         ${className}
       `}
       {...props}
@@ -69,15 +69,17 @@ const Card = ({
         <div className="flex items-start space-x-3 mb-4">
           {/* Icon */}
           {icon && (
-            <div className={`
+            <div
+              className={`
               flex-shrink-0 p-2 rounded-xl
-              ${variant === 'premium' ? 'bg-purple-500/20' : ''}
-              ${variant === 'success' ? 'bg-green-500/20' : ''}
-              ${variant === 'warning' ? 'bg-yellow-500/20' : ''}
-              ${variant === 'error' ? 'bg-red-500/20' : ''}
-              ${variant === 'default' || variant === 'glass' ? 'bg-gray-700/50' : ''}
-            `}>
-              {typeof icon === 'string' ? (
+              ${variant === "premium" ? "bg-purple-500/20" : ""}
+              ${variant === "success" ? "bg-green-500/20" : ""}
+              ${variant === "warning" ? "bg-yellow-500/20" : ""}
+              ${variant === "error" ? "bg-red-500/20" : ""}
+              ${variant === "default" || variant === "glass" ? "bg-gray-700/50" : ""}
+            `}
+            >
+              {typeof icon === "string" ? (
                 <span className="text-xl">{icon}</span>
               ) : (
                 icon
@@ -94,9 +96,7 @@ const Card = ({
                 </h3>
               )}
               {subtitle && (
-                <p className="text-gray-400 text-sm mt-1">
-                  {subtitle}
-                </p>
+                <p className="text-gray-400 text-sm mt-1">{subtitle}</p>
               )}
             </div>
           )}
@@ -104,25 +104,23 @@ const Card = ({
       )}
 
       {/* Content */}
-      <div className="text-gray-300 leading-relaxed">
-        {children}
-      </div>
+      <div className="text-gray-300 leading-relaxed">{children}</div>
 
       {/* Animated background for premium variant */}
-      {variant === 'premium' && glowEffect && (
+      {variant === "premium" && glowEffect && (
         <motion.div
           className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500/5 to-blue-500/5"
           animate={{
             background: [
-              'linear-gradient(to right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05))',
-              'linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))',
-              'linear-gradient(to right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05))'
-            ]
+              "linear-gradient(to right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05))",
+              "linear-gradient(to right, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05))",
+              "linear-gradient(to right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05))",
+            ],
           }}
           transition={{
             duration: 4,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
         />
       )}
@@ -135,7 +133,8 @@ const Card = ({
           whileTap={{ scale: 1, opacity: 0 }}
           transition={{ duration: 0.3 }}
           style={{
-            background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)'
+            background:
+              "radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)",
           }}
         />
       )}
@@ -143,4 +142,4 @@ const Card = ({
   );
 };
 
-export default Card; 
+export default Card;

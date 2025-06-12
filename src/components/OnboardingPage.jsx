@@ -1,8 +1,11 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import Button from './ui/Button';
-import HeroBackground from './HeroBackground';
-import { onboardingFeatures, ANIMATION_DELAYS } from '../types/onboarding.types';
+import React from "react";
+import { motion } from "framer-motion";
+import Button from "./ui/Button";
+import HeroBackground from "./HeroBackground";
+import {
+  onboardingFeatures,
+  ANIMATION_DELAYS,
+} from "../types/onboarding.types";
 
 // Компонент для карточки фичи
 const FeatureCard = ({ feature, index }) => (
@@ -24,15 +27,12 @@ const FeatureCard = ({ feature, index }) => (
 );
 
 const OnboardingPage = ({ onGetStarted }) => {
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 relative overflow-hidden">
       <div className="max-w-mobile mx-auto min-h-screen relative">
-        
         {/* Background Pattern */}
         <HeroBackground>
           <div className="min-h-screen flex flex-col">
-            
             {/* Logo */}
             <motion.div
               initial={{ opacity: 0, y: -50 }}
@@ -44,12 +44,12 @@ const OnboardingPage = ({ onGetStarted }) => {
                 <motion.div
                   animate={{
                     rotate: [0, 360],
-                    scale: [1, 1.1, 1]
+                    scale: [1, 1.1, 1],
                   }}
                   transition={{
                     duration: 10,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                   className="w-20 h-20 bg-gradient-to-br from-neon-green to-purple-500 rounded-3xl flex items-center justify-center shadow-lg shadow-neon-green/25"
                 >
@@ -60,7 +60,6 @@ const OnboardingPage = ({ onGetStarted }) => {
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col justify-center px-8 pb-20">
-              
               {/* Title */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -75,15 +74,15 @@ const OnboardingPage = ({ onGetStarted }) => {
                 </h1>
                 <motion.div
                   animate={{
-                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                   }}
                   transition={{
                     duration: 5,
                     repeat: Infinity,
-                    ease: "linear"
+                    ease: "linear",
                   }}
                   className="h-1 bg-gradient-to-r from-neon-green via-purple-500 to-blue-500 bg-[length:200%_100%] rounded-full mx-auto"
-                  style={{ width: '60%' }}
+                  style={{ width: "60%" }}
                 />
               </motion.div>
 
@@ -91,11 +90,16 @@ const OnboardingPage = ({ onGetStarted }) => {
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: ANIMATION_DELAYS.DESCRIPTION }}
+                transition={{
+                  duration: 0.8,
+                  delay: ANIMATION_DELAYS.DESCRIPTION,
+                }}
                 className="text-xl text-gray-300 text-center mb-12 leading-relaxed"
               >
-                Transform your style with AI magic.{' '}
-                <span className="text-neon-green font-semibold">Try on clothes instantly</span>{' '}
+                Transform your style with AI magic.{" "}
+                <span className="text-neon-green font-semibold">
+                  Try on clothes instantly
+                </span>{" "}
                 using cutting-edge technology.
               </motion.p>
 
@@ -152,19 +156,18 @@ const OnboardingPage = ({ onGetStarted }) => {
                   </div>
                 </motion.div>
               </motion.div>
-
             </div>
 
             {/* Floating Action Hint */}
             <motion.div
               animate={{
                 y: [0, -10, 0],
-                opacity: [0.6, 1, 0.6]
+                opacity: [0.6, 1, 0.6],
               }}
               transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
               className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
             >
@@ -172,7 +175,6 @@ const OnboardingPage = ({ onGetStarted }) => {
                 <span className="text-white text-sm">Swipe up to start</span>
               </div>
             </motion.div>
-
           </div>
         </HeroBackground>
       </div>
@@ -180,4 +182,4 @@ const OnboardingPage = ({ onGetStarted }) => {
   );
 };
 
-export default OnboardingPage; 
+export default OnboardingPage;

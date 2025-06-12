@@ -1,10 +1,10 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
-const GradientText = ({ 
-  children, 
-  className = '', 
-  gradient = 'from-white via-gray-100 to-white',
-  animation = true 
+const GradientText = ({
+  children,
+  className = "",
+  gradient = "from-white via-gray-100 to-white",
+  animation = true,
 }) => {
   return (
     <motion.div
@@ -14,20 +14,29 @@ const GradientText = ({
       className={`
         bg-gradient-to-r ${gradient} 
         bg-clip-text text-transparent 
-        ${animation ? 'bg-[200%_auto]' : ''}
+        ${animation ? "bg-[200%_auto]" : ""}
         ${className}
       `}
-      style={animation ? {
-        animation: 'gradient-shift 3s ease-in-out infinite'
-      } : {}}
+      style={
+        animation
+          ? {
+              animation: "gradient-shift 3s ease-in-out infinite",
+            }
+          : {}
+      }
     >
       {children}
-      
+
       {animation && (
         <style jsx>{`
           @keyframes gradient-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            0%,
+            100% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
           }
         `}</style>
       )}
@@ -35,4 +44,4 @@ const GradientText = ({
   );
 };
 
-export default GradientText; 
+export default GradientText;
