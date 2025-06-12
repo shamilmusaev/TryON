@@ -27,7 +27,6 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
 
   // Определяем isGenerating здесь, до useEffect'ов
   const isGenerating = !isCompleted && processingStatus !== 'failed' && !error;
-  const showControls = isCompleted || error;
 
   // Создание низкоразрешенной версии изображения для blur-заглушки
   const createLowResBlurImage = useCallback((imageUrl) => {

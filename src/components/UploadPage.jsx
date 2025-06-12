@@ -253,7 +253,7 @@ const UploadPage = ({ onBack, onContinue, onNavigation }) => {
                     <div className="relative">
                       <img 
                         src={uploadedPersonPhoto.url} 
-                        alt="Your photo" 
+                        alt="Uploaded portrait" 
                         className="w-full h-40 object-contain rounded-xl mb-3 bg-gray-50"
                       />
                       {/* Индикатор обработки HEIC */}
