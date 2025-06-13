@@ -1,22 +1,21 @@
 import { motion } from "framer-motion";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const Logo = ({ size = "large", className = "" }) => {
+  const { isDark } = useTheme();
+  
   const sizeClasses = {
     small: "text-2xl",
     medium: "text-3xl",
     large: "text-4xl md:text-5xl",
   };
 
-  // Определяем цвет подзаголовка на основе className
-  const isWhiteText = className.includes("text-white");
-  const isGrayText = className.includes("text-gray");
-
-  let subtitleColor = "text-white/80"; // по умолчанию
-  if (isGrayText) {
-    subtitleColor = "text-gray-600";
-  } else if (isWhiteText) {
-    subtitleColor = "text-white/80";
-  }
+  // Определяем цвета на основе темы
+  const gradientColors = isDark 
+    ? "from-neon-green via-green-400 to-neon-green" 
+    : "from-green-600 via-green-500 to-emerald-600";
+  
+  const subtitleColor = isDark ? "text-white/80" : "text-gray-600";
 
   return (
     <motion.div
@@ -34,7 +33,7 @@ const Logo = ({ size = "large", className = "" }) => {
           repeat: Infinity,
           ease: "linear",
         }}
-        className="bg-gradient-to-r from-neon-green via-green-400 to-neon-green bg-[200%_auto] bg-clip-text text-transparent"
+        className={`bg-gradient-to-r ${gradientColors} bg-[200%_auto] bg-clip-text text-transparent`}
       >
         TryOn
       </motion.div>

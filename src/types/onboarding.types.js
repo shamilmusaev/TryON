@@ -43,6 +43,6 @@ export const onboardingFeatures = [
 export const HERO_BACKGROUND_IMAGE = 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&h=1200&fit=crop&crop=faces';
 
 export const SPLIT_IMAGES = {
-  LEFT: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=800&fit=crop&crop=face',
-  RIGHT: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=800&fit=crop&crop=face'
+  LEFT: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=800&fit=crop&crop=face',
+  RIGHT: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=800&fit=crop&crop=face'
 }; 

@@ -4,6 +4,12 @@ import { useTheme } from "../contexts/ThemeContext";
 
 const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
   const { isDark } = useTheme();
+  
+  // Theme-adaptive colors
+  const neonGreenColor = isDark ? 'text-neon-green' : 'text-emerald-600';
+  const neonGreenBg = isDark ? 'bg-neon-green/20' : 'bg-emerald-100';
+  const neonGreenFill = isDark ? 'text-neon-green fill-neon-green' : 'text-emerald-600 fill-emerald-600';
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -46,9 +52,9 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
               repeat: Infinity,
               ease: "easeInOut",
             }}
-            className="w-8 h-8 bg-neon-green/20 rounded-full flex items-center justify-center"
+            className={`w-8 h-8 ${neonGreenBg} rounded-full flex items-center justify-center`}
           >
-            <Sparkles className="w-4 h-4 text-neon-green" />
+            <Sparkles className={`w-4 h-4 ${neonGreenColor}`} />
           </motion.div>
           <div>
             <h2 className={`text-xl font-bold mb-1 ${
@@ -66,7 +72,7 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`flex items-center space-x-2 text-neon-green text-sm font-medium px-3 py-2 rounded-full ${
+          className={`flex items-center space-x-2 ${neonGreenColor} text-sm font-medium px-3 py-2 rounded-full ${
             isDark ? 'glassmorphism' : 'apple-glass-light'
           }`}
         >
@@ -101,7 +107,11 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
             <motion.div
               initial={{ opacity: 0 }}
               whileHover={{ opacity: 1 }}
-              className="absolute inset-0 bg-gradient-to-br from-neon-green/10 to-purple-500/10 rounded-3xl"
+              className={`absolute inset-0 rounded-3xl ${
+                isDark 
+                  ? 'bg-gradient-to-br from-neon-green/10 to-purple-500/10'
+                  : 'bg-gradient-to-br from-emerald-200/20 to-purple-200/20'
+              }`}
             />
 
             <div className="relative mb-4">
@@ -122,7 +132,7 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                 className="absolute top-3 left-3 bg-black/60 backdrop-blur-lg rounded-full px-3 py-2"
               >
                 <div className="flex items-center space-x-1">
-                  <Star className="w-3 h-3 text-neon-green fill-neon-green" />
+                  <Star className={`w-3 h-3 ${neonGreenFill}`} />
 
                   <span className="text-white text-xs font-semibold">
                     {item.confidence}%
@@ -137,9 +147,13 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                 transition={{ delay: 0.6 + index * 0.1 }}
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.8 }}
-                className="absolute top-3 right-3 w-10 h-10 bg-black/60 backdrop-blur-lg rounded-full flex items-center justify-center group-hover:bg-neon-green/30 transition-all duration-300"
+                className={`absolute top-3 right-3 w-10 h-10 bg-black/60 backdrop-blur-lg rounded-full flex items-center justify-center transition-all duration-300 ${
+                  isDark ? 'group-hover:bg-neon-green/30' : 'group-hover:bg-emerald-500/30'
+                }`}
               >
-                <Heart className="w-4 h-4 text-white group-hover:text-neon-green transition-colors duration-300" />
+                <Heart className={`w-4 h-4 text-white transition-colors duration-300 ${
+                  isDark ? 'group-hover:text-neon-green' : 'group-hover:text-emerald-300'
+                }`} />
               </motion.button>
 
               {/* Hover overlay with Try On button */}
@@ -152,7 +166,11 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                   initial={{ scale: 0.8, opacity: 0 }}
                   whileHover={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-neon-green text-black px-6 py-3 rounded-full font-bold text-sm shadow-lg shadow-neon-green/25"
+                  className={`text-black px-6 py-3 rounded-full font-bold text-sm shadow-lg ${
+                    isDark 
+                      ? 'bg-neon-green shadow-neon-green/25'
+                      : 'bg-emerald-400 shadow-emerald-400/25'
+                  }`}
                 >
                   ✨ Try On
                 </motion.div>
@@ -174,8 +192,12 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                   whileHover={{ scale: 1.05 }}
                   className={`text-xs px-3 py-1.5 rounded-full font-medium ${
                     item.type === "outfit"
-                      ? "bg-purple-500/30 text-purple-200 border border-purple-400/30"
-                      : "bg-orange-500/30 text-orange-200 border border-orange-400/30"
+                      ? isDark 
+                        ? "bg-purple-500/30 text-purple-200 border border-purple-400/30"
+                        : "bg-purple-100 text-purple-700 border border-purple-300/50"
+                      : isDark
+                        ? "bg-orange-500/30 text-orange-200 border border-orange-400/30"
+                        : "bg-orange-100 text-orange-700 border border-orange-300/50"
                   }`}
                 >
                   {item.type === "outfit" ? "👗 Complete Look" : "💡 Style Tip"}
@@ -184,7 +206,7 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                 <motion.div
                   animate={{ x: [0, 8, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="text-neon-green flex items-center space-x-1"
+                  className={`${neonGreenColor} flex items-center space-x-1`}
                 >
                   <span className="text-xs font-medium">Explore</span>
                   <ArrowRight size={14} />
@@ -204,7 +226,7 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
                   repeat: Infinity,
                   delay: 1,
                 }}
-                className="absolute top-4 right-16 text-neon-green text-xs"
+                className={`absolute top-4 right-16 ${neonGreenColor} text-xs`}
               >
                 ✨
               </motion.div>
@@ -216,25 +238,31 @@ const AIRecommendations = ({ recommendations, onRecommendationClick }) => {
         <motion.div
           variants={itemVariants}
           whileHover={{ scale: 1.05 }}
-          className="min-w-[180px] h-72 glassmorphism rounded-3xl p-5 cursor-pointer flex flex-col items-center justify-center group"
+          className={`min-w-[180px] h-72 rounded-3xl p-5 cursor-pointer flex flex-col items-center justify-center group ${
+            isDark ? 'glassmorphism' : 'apple-glass-light'
+          }`}
         >
           <motion.div
             animate={{ rotate: [0, 360] }}
             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 bg-neon-green/20 rounded-full flex items-center justify-center mb-4"
+            className={`w-16 h-16 ${neonGreenBg} rounded-full flex items-center justify-center mb-4`}
           >
-            <Sparkles className="w-8 h-8 text-neon-green" />
+            <Sparkles className={`w-8 h-8 ${neonGreenColor}`} />
           </motion.div>
-          <h3 className="text-white font-semibold text-center mb-2">
+          <h3 className={`font-semibold text-center mb-2 ${
+            isDark ? 'text-white' : 'text-gray-800'
+          }`}>
             Discover More
           </h3>
-          <p className="text-gray-400 text-sm text-center">
+          <p className={`text-sm text-center ${
+            isDark ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             AI is finding perfect matches
           </p>
           <motion.div
             animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="mt-3 text-neon-green text-xs"
+            className={`mt-3 ${neonGreenColor} text-xs`}
           >
             ⚡ Coming soon
           </motion.div>

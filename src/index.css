@@ -99,6 +99,18 @@
     color: #00ff88;
   }
 
+  .text-neon-green-light {
+    color: #059669; /* темно-зеленый для светлой темы */
+  }
+
+  .text-neon-green-adaptive {
+    color: #00ff88; /* для темной темы */
+  }
+
+  .text-neon-green-adaptive-light {
+    color: #047857; /* для светлой темы */
+  }
+
   .bg-neon-green {
     background-color: #00ff88;
   }

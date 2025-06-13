@@ -11,12 +11,16 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
+    } else {
+      // Если нет сохраненной темы, устанавливаем светлую по умолчанию
+      setTheme('light');
+      localStorage.setItem('theme', 'light');
     }
   }, []);
 

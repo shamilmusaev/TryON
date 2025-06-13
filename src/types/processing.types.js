@@ -113,7 +113,7 @@ export const processingTimeline = [
 
 // Моковые данные для обработки
 export const mockProcessingData = {
-  userPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=400&fit=crop&crop=face',
+  userPhoto: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop&crop=face',
   clothingPhoto: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=300&h=400&fit=crop',
   aiModel: 'ChimeraNet v3.1',
   estimatedTime: 30, // секунды

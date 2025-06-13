@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, RefreshCw, Sun, Moon } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import ActionGrid from "./ActionGrid";
 import AIRecommendations from "./AIRecommendations";
 import MyUploadedImages from "./MyUploadedImages";
@@ -15,7 +15,6 @@ import userImageStorage from "../services/userImageStorage";
 
 const HomePage = ({ onStartProcessing, onNavigation }) => {
   const { toggleTheme, isDark } = useTheme();
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
   const [showUploadedImages, setShowUploadedImages] = useState(false);
   const [userImages, setUserImages] = useState([]);
@@ -35,12 +34,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    // Имитация загрузки
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsRefreshing(false);
-  };
+
 
   // Загружаем пользовательские изображения при монтировании
   useEffect(() => {
@@ -106,53 +100,16 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
             {/* Logo */}
             <Logo size="small" className="text-lg" />
 
-            <div className="flex items-center space-x-3">
-              {/* Existing buttons with theme adaptation */}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleRefresh}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                  isDark 
-                    ? 'glass-card-dark hover:bg-white/10' 
-                    : 'glass-card-light hover:bg-white/40 shadow-lg'
-                }`}
-              >
-                <motion.div
-                  animate={isRefreshing ? { rotate: 360 } : {}}
-                  transition={{
-                    duration: 1,
-                    repeat: isRefreshing ? Infinity : 0,
-                  }}
-                >
-                  <RefreshCw className={`w-6 h-6 ${isDark ? 'text-gray-200' : 'text-indigo-600'}`} />
-                </motion.div>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center relative transition-all duration-300 ${
-                  isDark 
-                    ? 'glass-card-dark hover:bg-white/10' 
-                    : 'glass-card-light hover:bg-white/40 shadow-lg'
-                }`}
-              >
-                <Bell className={`w-6 h-6 ${isDark ? 'text-gray-200' : 'text-indigo-600'}`} />
-                <motion.div
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className={`absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 ${
-                    isDark ? 'border-gray-900' : 'border-white'
-                  }`}
-                />
-              </motion.button>
-
+            <div className="flex items-center">
               <motion.img
                 whileHover={{ scale: 1.05 }}
                 src={mockUserData.avatar}
                 alt="Profile"
-                className="w-10 h-10 rounded-full object-cover border-2 border-green-400 shadow-lg shadow-green-400/20"
+                className={`w-10 h-10 rounded-full object-cover border-2 shadow-lg transition-all duration-300 ${
+                  isDark 
+                    ? 'border-green-400 shadow-green-400/20' 
+                    : 'border-emerald-500 shadow-emerald-500/20'
+                }`}
               />
             </div>
           </div>
@@ -303,7 +260,9 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-neon-green mb-1">
+                <div className={`text-2xl font-bold mb-1 ${
+                  isDark ? 'text-neon-green' : 'text-emerald-600'
+                }`}>
                   47
                 </div>
                 <div className={`text-xs ${
@@ -311,7 +270,9 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
                 }`}>Try-Ons</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400 mb-1">
+                <div className={`text-2xl font-bold mb-1 ${
+                  isDark ? 'text-purple-400' : 'text-purple-600'
+                }`}>
                   12
                 </div>
                 <div className={`text-xs ${
@@ -319,7 +280,9 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
                 }`}>Favorites</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-400 mb-1">
+                <div className={`text-2xl font-bold mb-1 ${
+                  isDark ? 'text-orange-400' : 'text-orange-600'
+                }`}>
                   23
                 </div>
                 <div className={`text-xs ${
@@ -332,7 +295,11 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
               initial={{ width: 0 }}
               animate={{ width: "75%" }}
               transition={{ duration: 1.5, delay: 1 }}
-              className="h-2 bg-gradient-to-r from-neon-green to-purple-500 rounded-full mt-4"
+              className={`h-2 rounded-full mt-4 ${
+                isDark 
+                  ? 'bg-gradient-to-r from-neon-green to-purple-500'
+                  : 'bg-gradient-to-r from-emerald-500 to-purple-600'
+              }`}
             />
 
             <p className={`text-xs mt-2 ${
@@ -345,27 +312,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
         </div>
       </div>
 
-      {/* Pull to refresh indicator */}
-      <AnimatePresence>
-        {isRefreshing && (
-          <motion.div
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className="fixed top-20 left-1/2 transform -translate-x-1/2 glassmorphism px-4 py-2 rounded-full z-50"
-          >
-            <div className="flex items-center space-x-2">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity }}
-              >
-                <RefreshCw className="w-4 h-4 text-neon-green" />
-              </motion.div>
-              <span className="text-white text-sm">Updating styles...</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* Navigation */}
       <Navbar onNavigation={onNavigation} />

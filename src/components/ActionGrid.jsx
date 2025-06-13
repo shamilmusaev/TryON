@@ -56,16 +56,6 @@ const ActionGrid = ({ onActionClick }) => {
       icon: History,
       gradient: "glassmorphism border border-white/20",
     },
-    {
-      id: "theme",
-      title: isDark ? "Light Mode" : "Dark Mode",
-      subtitle: isDark ? "Switch to light" : "Switch to dark",
-      icon: isDark ? Sun : Moon,
-      gradient: isDark 
-        ? "bg-gradient-to-br from-orange-400 to-yellow-400" 
-        : "bg-gradient-to-br from-indigo-500 to-purple-600",
-      special: true,
-    },
   ];
 
   const containerVariants = {
@@ -97,8 +87,8 @@ const ActionGrid = ({ onActionClick }) => {
       animate="visible"
       className="grid grid-cols-2 gap-4 mb-8"
       style={{
-        gridTemplateColumns: actionItems.length === 5 ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)',
-        gridTemplateRows: actionItems.length === 5 ? 'repeat(3, auto)' : 'repeat(2, auto)'
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gridTemplateRows: 'repeat(2, auto)'
       }}
     >
       {actionItems.map((item, index) => (
@@ -108,11 +98,7 @@ const ActionGrid = ({ onActionClick }) => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => {
-            if (item.id === 'theme') {
-              toggleTheme();
-            } else {
-              onActionClick?.(item.id);
-            }
+            onActionClick?.(item.id);
           }}
           className={`p-6 rounded-2xl cursor-pointer relative overflow-hidden transition-all duration-300 ${
             isDark 
@@ -130,8 +116,6 @@ const ActionGrid = ({ onActionClick }) => {
                       : item.gradient
           } ${
             item.highlight ? (isDark ? "shadow-lg shadow-neon-green/25" : "shadow-lg shadow-green-400/25") : ""
-          } ${
-            index === 4 ? "col-span-2" : ""
           }`}
         >
           {/* Background pattern for wardrobe */}
@@ -177,24 +161,6 @@ const ActionGrid = ({ onActionClick }) => {
                 ))
               )}
             </div>
-          )}
-
-          {/* Theme toggle special effect */}
-          {item.special && (
-            <motion.div
-              animate={{
-                rotate: [0, 360],
-                scale: [1, 1.2, 1],
-              }}
-              transition={{
-                duration: 3,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute bottom-2 right-2 text-white/70"
-            >
-              {isDark ? "☀️" : "🌙"}
-            </motion.div>
           )}
 
           <div className="flex flex-col h-full">
