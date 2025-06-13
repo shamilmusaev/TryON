@@ -81,11 +81,7 @@ function AppContent() {
     // Оставляем ее пустой или удаляем, если она больше нигде не используется
   };
 
-  // Завершение загрузки и переход к обработке
-  const handleUploadComplete = (uploadData) => {
-    console.log('📤 Upload complete, starting processing...', uploadData);
-    handleNavigation('processing', uploadData);
-  };
+
 
   // Завершение обработки и переход к результату
   const handleProcessingComplete = (generationResult) => {

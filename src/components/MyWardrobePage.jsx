@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, Trash2, Shirt } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import wardrobeStorage from '../services/wardrobeStorage';
