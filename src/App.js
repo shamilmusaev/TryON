@@ -4,13 +4,13 @@ import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import './index.css';
 import OnboardingPage from './components/OnboardingPage';
 import HomePage from './components/HomePage';
-import UploadPage from './components/UploadPage';
 import ProcessingPage from './components/ProcessingPage';
 import ResultPage from './components/ResultPage';
+import MyWardrobePage from './components/MyWardrobePage';
 
 function AppContent() {
   const { isDark } = useTheme();
-  const [currentView, setCurrentView] = useState('home'); // home, upload, processing, result, onboarding
+  const [currentView, setCurrentView] = useState('home'); // home, processing, result, onboarding, wardrobe
   const [tryOnData, setTryOnData] = useState(null); // Данные для генерации
   const [resultData, setResultData] = useState(null); // Результаты генерации
 
@@ -77,7 +77,8 @@ function AppContent() {
 
   // Начало процесса try-on
   const handleStartTryOn = () => {
-    handleNavigation('upload');
+    // Эта функция больше не нужна, так как загрузка происходит на главной странице
+    // Оставляем ее пустой или удаляем, если она больше нигде не используется
   };
 
   // Завершение загрузки и переход к обработке
@@ -95,16 +96,10 @@ function AppContent() {
   // Возврат на предыдущую страницу
   const handleBack = () => {
     switch (currentView) {
-      case 'upload':
-        handleNavigation('home');
-        break;
       case 'processing':
-        handleNavigation('upload');
-        break;
       case 'result':
-        handleNavigation('home');
-        break;
       case 'onboarding':
+      case 'wardrobe':
         handleNavigation('home');
         break;
       default:
@@ -119,15 +114,6 @@ function AppContent() {
         return (
           <HomePage
             onStartProcessing={handleStartTryOn}
-            onNavigation={handleNavigation}
-          />
-        );
-
-      case 'upload':
-        return (
-          <UploadPage
-            onBack={handleBack}
-            onContinue={handleUploadComplete}
             onNavigation={handleNavigation}
           />
         );
@@ -149,6 +135,9 @@ function AppContent() {
             resultData={resultData}
           />
         );
+
+      case 'wardrobe':
+        return <MyWardrobePage onBack={handleBack} />;
 
       case 'onboarding':
         return (

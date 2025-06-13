@@ -1,37 +1,19 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Shirt, Camera, History, Sun, Moon, Image } from "lucide-react";
+import { Shirt, Camera, History, Image } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 
-const ActionGrid = ({ onActionClick }) => {
-  const { isDark, toggleTheme } = useTheme();
+const ActionGrid = ({ onActionClick, uploadedImagesPreview = [], wardrobePreview = [] }) => {
+  const { isDark } = useTheme();
   
-  // Получаем пользовательские изображения для превью
-  const userImages = React.useMemo(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('userUploadedImages');
-        const images = stored ? JSON.parse(stored) : [];
-        return images.slice(0, 3); // Показываем только первые 3
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  }, []);
   const actionItems = [
     {
       id: "wardrobe",
       title: "My Wardrobe",
-      subtitle: "23 items",
+      subtitle: "Generated looks",
       icon: Shirt,
       gradient: "gradient-purple",
-      images: [
-        "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=40&h=40&fit=crop",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop",
-        "https://images.unsplash.com/photo-1494790108755-2616c819074c?w=40&h=40&fit=crop",
-        "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=40&h=40&fit=crop",
-      ],
+      wardrobe: true,
     },
     {
       id: "uploaded-images",
@@ -118,48 +100,39 @@ const ActionGrid = ({ onActionClick }) => {
             item.highlight ? (isDark ? "shadow-lg shadow-neon-green/25" : "shadow-lg shadow-green-400/25") : ""
           }`}
         >
-          {/* Background pattern for wardrobe */}
-          {item.images && (
-            <div className="absolute bottom-2 left-2 flex space-x-1">
-              {item.images.slice(0, 4).map((img, imgIndex) => (
-                <img
-                  key={imgIndex}
-                  src={img}
-                  alt=""
-                  className="w-5 h-5 rounded-md opacity-60"
+          {/* Wardrobe preview for generated looks */}
+          {item.wardrobe && wardrobePreview.length > 0 && (
+            <div className="absolute bottom-2 left-2 flex -space-x-2">
+              {wardrobePreview.slice(0, 4).map((image, imgIndex) => (
+                <motion.img
+                  key={image.id || imgIndex}
+                  src={image.url}
+                  alt={`Wardrobe ${imgIndex + 1}`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: imgIndex * 0.15 }}
+                  className="w-6 h-6 rounded-full object-cover border-2 border-white/40 dark:border-gray-800/60 shadow-md"
+                  style={{ zIndex: wardrobePreview.length - imgIndex }}
                 />
               ))}
             </div>
           )}
 
           {/* Gallery preview for uploaded images */}
-          {item.gallery && (
-            <div className="absolute bottom-2 right-2 flex space-x-1">
-              {userImages.length > 0 ? (
-                userImages.map((image, index) => (
-                  <motion.img
-                    key={image.id}
-                    src={image.url}
-                    alt={`Upload ${index + 1}`}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.8 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="w-4 h-4 rounded-md object-cover border border-white/30"
-                  />
-                ))
-              ) : (
-                [1, 2, 3].map((index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 0.7 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`w-4 h-4 rounded-md ${
-                      isDark ? 'bg-white/30' : 'bg-gray-600/30'
-                    } border border-white/20`}
-                  />
-                ))
-              )}
+          {item.gallery && uploadedImagesPreview.length > 0 && (
+            <div className="absolute bottom-2 right-2 flex -space-x-2">
+              {uploadedImagesPreview.map((image, index) => (
+                <motion.img
+                  key={image.id || index}
+                  src={image.url}
+                  alt={`Preview ${index + 1}`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: index * 0.15 }}
+                  className="w-6 h-6 rounded-full object-cover border-2 border-white/40 dark:border-gray-800/60 shadow-md"
+                  style={{ zIndex: uploadedImagesPreview.length - index }}
+                />
+              ))}
             </div>
           )}
 

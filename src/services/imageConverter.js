@@ -155,6 +155,7 @@ class ImageConverterService {
 
   // Главный метод: автоматическая обработка файла
   async processImage(file) {
+    console.log(`🖼️ Начало обработки изображения: ${file.name}, размер: ${(file.size / 1024).toFixed(2)} KB`);
     try {
       let processedFile = file;
       
@@ -219,6 +220,16 @@ class ImageConverterService {
       };
       
       img.src = url;
+    });
+  }
+
+  // Конвертировать файл в Base64
+  fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
     });
   }
 }

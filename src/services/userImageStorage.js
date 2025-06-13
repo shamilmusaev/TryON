@@ -1,7 +1,7 @@
 // Сервис для управления пользовательскими изображениями
 class UserImageStorage {
   constructor() {
-    this.storageKey = 'userUploadedImages';
+    this.storageKey = 'user_uploaded_images';
     this.lastUsedKey = 'lastUsedImages';
   }
 
@@ -18,48 +18,48 @@ class UserImageStorage {
 
   // Сохранить изображение
   saveImage(imageData, type = 'person') {
+    if (!imageData || !imageData.url) {
+      console.error('Невозможно сохранить изображение: неверные данные', imageData);
+      return null;
+    }
+
     try {
-      const images = this.getAllImages();
+      let images = this.getAllImages();
+      
+      const { file, ...storableImageData } = imageData;
+
       const newImage = {
-        id: this.generateId(),
-        url: imageData.url,
-        file: imageData.file ? {
-          name: imageData.file.name,
-          size: imageData.file.size,
-          type: imageData.file.type
-        } : null,
-        type: type, // 'person' или 'outfit'
+        ...storableImageData,
+        id: `img_${new Date().getTime()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: type, // 'person' or 'outfit'
         uploadedAt: new Date().toISOString(),
-        isLastUsed: false,
-        name: imageData.name || `${type}_${Date.now()}`
       };
 
-      // Убираем флаг lastUsed у других изображений того же типа
-      images.forEach(img => {
-        if (img.type === type) {
-          img.isLastUsed = false;
-        }
-      });
-
-      // Добавляем новое изображение как последнее использованное
-      newImage.isLastUsed = true;
-      images.push(newImage);
-
-      // Ограничиваем количество сохраненных изображений (максимум 20)
-      const maxImages = 20;
-      if (images.length > maxImages) {
-        // Удаляем самые старые изображения
-        images.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
-        images.splice(maxImages);
-      }
-
-      localStorage.setItem(this.storageKey, JSON.stringify(images));
-      this.setLastUsedImage(type, newImage);
+      // Убираем старую версию этого фото, если она есть
+      images = images.filter(img => img.id !== newImage.id && img.url !== newImage.url);
       
-      console.log('✅ Изображение сохранено:', newImage);
-      return newImage;
+      // Добавляем новое изображение в начало списка
+      images.unshift(newImage);
+
+      // Ограничиваем количество
+      const MAX_IMAGES = 50;
+      if (images.length > MAX_IMAGES) {
+        images = images.slice(0, MAX_IMAGES);
+      }
+      
+      localStorage.setItem(this.storageKey, JSON.stringify(images));
+      this.setLastUsedImage(newImage);
+      
+      console.log(`🖼️ Изображение типа "${type}" сохранено. ID: ${newImage.id}. Всего изображений: ${images.length}`);
+      
+      // Возвращаем полный объект с файлом для немедленного использования
+      return { ...newImage, file };
     } catch (error) {
-      console.error('❌ Ошибка при сохранении изображения:', error);
+      console.error('Ошибка сохранения изображения в localStorage:', error);
+      if (error instanceof SyntaxError) {
+        console.warn('Очистка localStorage из-за неверного JSON.');
+        localStorage.removeItem(this.storageKey);
+      }
       return null;
     }
   }
@@ -74,65 +74,38 @@ class UserImageStorage {
   // Получить последнее использованное изображение по типу
   getLastUsedImage(type) {
     try {
-      const lastUsed = localStorage.getItem(this.lastUsedKey);
-      const lastUsedData = lastUsed ? JSON.parse(lastUsed) : {};
-      return lastUsedData[type] || null;
+      const images = this.getAllImages();
+      return images.find(img => img.type === type && img.isLastUsed);
     } catch (error) {
-      console.error('Ошибка при загрузке последнего изображения:', error);
+      console.error('Ошибка получения последнего использованного изображения:', error);
       return null;
     }
   }
 
   // Установить последнее использованное изображение
-  setLastUsedImage(type, imageData) {
+  setLastUsedImage(imageData) {
+    if (!imageData) return;
     try {
-      const lastUsed = localStorage.getItem(this.lastUsedKey);
-      const lastUsedData = lastUsed ? JSON.parse(lastUsed) : {};
+      let images = this.getAllImages();
       
-      lastUsedData[type] = {
-        id: imageData.id,
-        url: imageData.url,
-        name: imageData.name,
-        uploadedAt: imageData.uploadedAt
-      };
+      images = images.map(i => ({ ...i, isLastUsed: i.id === imageData.id }));
       
-      localStorage.setItem(this.lastUsedKey, JSON.stringify(lastUsedData));
-      
-      // Обновляем флаг isLastUsed в общем списке
-      const images = this.getAllImages();
-      images.forEach(img => {
-        img.isLastUsed = (img.type === type && img.id === imageData.id);
-      });
       localStorage.setItem(this.storageKey, JSON.stringify(images));
-      
     } catch (error) {
-      console.error('Ошибка при установке последнего изображения:', error);
+      console.error('Ошибка обновления последнего использованного изображения:', error);
     }
   }
 
   // Удалить изображение
   deleteImage(imageId) {
     try {
-      const images = this.getAllImages();
-      const filteredImages = images.filter(img => img.id !== imageId);
-      localStorage.setItem(this.storageKey, JSON.stringify(filteredImages));
-      
-      // Проверяем, было ли это последнее использованное изображение
-      const lastUsed = localStorage.getItem(this.lastUsedKey);
-      if (lastUsed) {
-        const lastUsedData = JSON.parse(lastUsed);
-        Object.keys(lastUsedData).forEach(type => {
-          if (lastUsedData[type].id === imageId) {
-            delete lastUsedData[type];
-          }
-        });
-        localStorage.setItem(this.lastUsedKey, JSON.stringify(lastUsedData));
-      }
-      
-      console.log('✅ Изображение удалено:', imageId);
+      let images = this.getAllImages();
+      const updatedImages = images.filter(img => img.id !== imageId);
+      localStorage.setItem(this.storageKey, JSON.stringify(updatedImages));
+      console.log(`🗑️ Изображение удалено. ID: ${imageId}`);
       return true;
     } catch (error) {
-      console.error('❌ Ошибка при удалении изображения:', error);
+      console.error('Ошибка удаления изображения из localStorage:', error);
       return false;
     }
   }

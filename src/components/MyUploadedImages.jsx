@@ -1,12 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, User, Shirt, Calendar } from 'lucide-react';
+import { ArrowRight, User, Trash2 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import userImageStorage from '../services/userImageStorage';
 
-const MyUploadedImages = ({ userImages, onImageSelect, onBackToHome }) => {
+const MyUploadedImages = ({ userImages: allImages, onImageSelect, onBackToHome }) => {
   const { isDark } = useTheme();
   
+  // 1. Фильтрация и локальное состояние
+  const [images, setImages] = useState(allImages.filter(img => img.type === 'person'));
 
+  // 2. Функция удаления
+  const handleDelete = (e, imageId) => {
+    e.stopPropagation(); // Предотвращаем клик по карточке
+    userImageStorage.deleteImage(imageId);
+    setImages(currentImages => currentImages.filter(img => img.id !== imageId));
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -28,13 +37,6 @@ const MyUploadedImages = ({ userImages, onImageSelect, onBackToHome }) => {
         ease: "easeOut",
       },
     },
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-    });
   };
 
   return (
@@ -116,7 +118,7 @@ const MyUploadedImages = ({ userImages, onImageSelect, onBackToHome }) => {
                   <h3 className={`font-bold text-lg ${
                     isDark ? 'text-white' : 'text-gray-800'
                   }`}>
-                    {userImages.length} Photos
+                    {images.length} Photos
                   </h3>
                   <p className={`text-sm ${
                     isDark ? 'text-gray-400' : 'text-gray-600'
@@ -135,111 +137,108 @@ const MyUploadedImages = ({ userImages, onImageSelect, onBackToHome }) => {
             </div>
           </motion.div>
 
-          {/* Images Grid */}
-          {userImages.length > 0 ? (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-2 gap-4"
-            >
-              {userImages.map((image, index) => (
-                <motion.div
-                  key={image.id}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.05, y: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => onImageSelect(image)}
-                  className={`relative rounded-2xl overflow-hidden cursor-pointer group ${
-                    isDark ? 'bg-gray-800/50' : 'bg-white/50'
-                  } backdrop-blur-sm border ${
-                    isDark ? 'border-gray-700/50' : 'border-gray-200/50'
-                  }`}
-                  style={{ aspectRatio: '3/4' }}
-                >
-                  <img
-                    src={image.url}
-                    alt={`Upload ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {/* Overlay */}
-                  <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`}>
+          {/* 5. Добавлен скролл */}
+          <div className="h-[calc(100vh-15rem)] overflow-y-auto pb-8">
+            {images.length > 0 ? (
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-2 gap-4"
+              >
+                {images.map((image, index) => (
+                  <motion.div
+                    key={image.id}
+                    variants={itemVariants}
+                    whileHover={{ scale: 1.05, y: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onImageSelect(image)}
+                    className={`relative rounded-2xl overflow-hidden cursor-pointer group ${
+                      isDark ? 'bg-gray-800/50' : 'bg-white/50'
+                    } backdrop-blur-sm border ${
+                      isDark ? 'border-gray-700/50' : 'border-gray-200/50'
+                    }`}
+                    style={{ aspectRatio: '3/4' }}
+                  >
+                    {/* 3. Превью всегда видно */}
+                    <img
+                      src={image.url}
+                      alt={`Upload ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    
+                    {/* 4. Кнопка удаления */}
+                    <motion.button
+                      onClick={(e) => handleDelete(e, image.id)}
+                      whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.8)' }}
+                      whileTap={{ scale: 0.9 }}
+                      className="absolute top-2 right-2 z-10 p-2 bg-black/40 rounded-full text-white"
+                    >
+                      <Trash2 size={16} />
+                    </motion.button>
+
                     <div className="absolute bottom-3 left-3 right-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <Shirt className="w-4 h-4 text-white" />
+                          <User className="w-4 h-4 text-white" />
                           <span className="text-white text-xs font-medium">
                             {image.type === 'person' ? 'Person' : 'Outfit'}
                           </span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 text-white/80" />
                           <span className="text-white/80 text-xs">
-                            {formatDate(image.uploadedAt)}
+                            {new Date(image.savedAt).toLocaleDateString('ru-RU', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
                           </span>
                         </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Last used indicator */}
-                  {image.isLastUsed && (
-                    <div className="absolute top-3 right-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                      Last used
-                    </div>
-                  )}
-
-                  {/* Select button overlay */}
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileHover={{ opacity: 1, scale: 1 }}
-                    className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm"
-                  >
-                    <div className="bg-white text-gray-900 px-4 py-2 rounded-full font-bold text-sm shadow-lg">
-                      Select
-                    </div>
                   </motion.div>
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            // Empty state
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className={`text-center py-12 rounded-2xl ${
-                isDark ? 'apple-glass-dark' : 'apple-glass-light'
-              }`}
-            >
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-6xl mb-4"
-              >
-                📷
+                ))}
               </motion.div>
-              <h3 className={`text-xl font-bold mb-2 ${
-                isDark ? 'text-white' : 'text-gray-800'
-              }`}>
-                No Images Yet
-              </h3>
-              <p className={`text-sm mb-6 ${
-                isDark ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                Upload your first photo to get started
-              </p>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => onImageSelect(null)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-bold shadow-lg"
+            ) : (
+              // Empty state
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className={`text-center py-12 rounded-2xl ${
+                  isDark ? 'apple-glass-dark' : 'apple-glass-light'
+                }`}
               >
-                Upload Photo
-              </motion.button>
-            </motion.div>
-          )}
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-6xl mb-4"
+                >
+                  ��
+                </motion.div>
+                <h3 className={`text-xl font-bold mb-2 ${
+                  isDark ? 'text-white' : 'text-gray-800'
+                }`}>
+                  No Images Yet
+                </h3>
+                <p className={`text-sm mb-6 ${
+                  isDark ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  Upload your first photo to get started
+                </p>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onImageSelect(null)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full font-bold shadow-lg"
+                >
+                  Upload Photo
+                </motion.button>
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
       </motion.div>

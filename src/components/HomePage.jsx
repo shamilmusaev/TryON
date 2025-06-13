@@ -6,18 +6,22 @@ import AIRecommendations from "./AIRecommendations";
 import MyUploadedImages from "./MyUploadedImages";
 import Navbar from "./common/Navbar";
 import Logo from "./common/Logo";
+import VirtualTryOn from './VirtualTryOn';
 import {
   mockRecommendations,
   mockUserData,
 } from "../types/home.types";
 import { useTheme } from "../contexts/ThemeContext";
 import userImageStorage from "../services/userImageStorage";
+import wardrobeStorage from "../services/wardrobeStorage";
 
 const HomePage = ({ onStartProcessing, onNavigation }) => {
   const { toggleTheme, isDark } = useTheme();
   const [currentTime, setCurrentTime] = useState("");
   const [showUploadedImages, setShowUploadedImages] = useState(false);
   const [userImages, setUserImages] = useState([]);
+  const [wardrobeItems, setWardrobeItems] = useState([]);
+  const [selectedUserImage, setSelectedUserImage] = useState(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -36,18 +40,20 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
 
 
 
-  // Загружаем пользовательские изображения при монтировании
+  // Загружаем пользовательские изображения и элементы гардероба при монтировании
   useEffect(() => {
     const loadUserImages = () => {
       let images = userImageStorage.getAllImages();
+      setUserImages(images);
+    };
 
-      
-
-      
-              setUserImages(images);
+    const loadWardrobeItems = () => {
+      let items = wardrobeStorage.getAllItems();
+      setWardrobeItems(items);
     };
 
     loadUserImages();
+    loadWardrobeItems();
   }, []);
 
   const handleActionClick = (actionId) => {
@@ -59,16 +65,17 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
       const currentImages = userImageStorage.getAllImages();
       setUserImages(currentImages);
       setShowUploadedImages(true);
+    } else if (actionId === 'wardrobe') {
+      onNavigation('wardrobe');
     }
   };
 
   const handleImageSelect = (selectedImage) => {
     if (selectedImage) {
-      console.log('🖼️ Изображение выбрано:', selectedImage);
-      // Здесь можно добавить логику для предзаполнения UploadPage выбранным изображением
+      console.log('🖼️ Изображение выбрано из галереи:', selectedImage);
+      setSelectedUserImage(selectedImage);
     }
     setShowUploadedImages(false);
-    onNavigation('upload');
   };
 
   const handleBackToHome = () => {
@@ -150,76 +157,16 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
 
 
 
-          {/* Main CTA Button */}
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleActionClick("camera")}
-            className="w-full gradient-neon rounded-2xl p-6 mb-8 relative overflow-hidden group"
-          >
-            {/* Shimmer effect */}
-            <motion.div
-              animate={{
-                x: ["-100%", "100%"],
-              }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{
-                background:
-                  "linear-gradient(45deg, transparent, rgba(255,255,255,0.3), transparent)",
-                transform: "skewX(-15deg)",
-              }}
-            />
+          {/* Main AI virtual try-on component */}
+          <VirtualTryOn onNavigation={onNavigation} selectedImage={selectedUserImage} />
 
-            <div className="flex items-center relative z-10">
-              {/* Camera Icon Circle */}
-              <motion.div
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="w-16 h-16 bg-black/20 rounded-full flex items-center justify-center mr-4"
-              >
-                <div className="w-6 h-6 bg-black/30 rounded-full flex items-center justify-center">
-                  <div className="w-2 h-2 bg-black/50 rounded-full"></div>
-                </div>
-              </motion.div>
-
-              <div className="flex-1">
-                <h3 className="text-black font-bold text-xl mb-1 text-left">
-                  Try Something New 👗
-                </h3>
-                <div className="flex items-center justify-between">
-                  <p className="text-black/70 text-sm">
-                    Upload photo & see magic happen
-                  </p>
-                  <motion.div
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="text-black text-lg"
-                  >
-                    →
-                  </motion.div>
-                </div>
-
-                {/* AI Process indicator */}
-                <div className="mt-2 flex items-center">
-                  <div className="h-1 bg-black/20 rounded-full flex-1 mr-2">
-                    <motion.div
-                      animate={{ width: ["0%", "60%", "0%"] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                      className="h-1 bg-black/40 rounded-full"
-                    />
-                  </div>
-                  <span className="text-black/60 text-xs">AI process</span>
-                </div>
-              </div>
-            </div>
-          </motion.button>
 
           {/* Action Grid */}
-          <ActionGrid onActionClick={handleActionClick} />
+          <ActionGrid 
+            onActionClick={handleActionClick}
+            uploadedImagesPreview={userImages.filter(i => i.type === 'person').slice(0, 3)}
+            wardrobePreview={wardrobeItems.slice(0, 4)}
+          />
 
           {/* AI Recommendations */}
           <AIRecommendations
@@ -227,92 +174,8 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
             onRecommendationClick={handleRecommendationClick}
           />
 
-          {/* Fashion Journey Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className={`rounded-2xl p-6 ${
-              isDark ? 'glassmorphism' : 'apple-glass-light'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className={`text-xl font-bold mb-1 ${
-                  isDark ? 'text-white' : 'text-gray-800'
-                }`}>
-                  Your Fashion Journey
-                </h2>
-                <p className={`text-sm ${
-                  isDark ? 'text-gray-400' : 'text-gray-600'
-                }`}>
-                  Track your style evolution
-                </p>
-              </div>
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="text-2xl"
-              >
-                📊
-              </motion.div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className={`text-2xl font-bold mb-1 ${
-                  isDark ? 'text-neon-green' : 'text-emerald-600'
-                }`}>
-                  47
-                </div>
-                <div className={`text-xs ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}>Try-Ons</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl font-bold mb-1 ${
-                  isDark ? 'text-purple-400' : 'text-purple-600'
-                }`}>
-                  12
-                </div>
-                <div className={`text-xs ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}>Favorites</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-2xl font-bold mb-1 ${
-                  isDark ? 'text-orange-400' : 'text-orange-600'
-                }`}>
-                  23
-                </div>
-                <div className={`text-xs ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}>Saved</div>
-              </div>
-            </div>
-
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: "75%" }}
-              transition={{ duration: 1.5, delay: 1 }}
-              className={`h-2 rounded-full mt-4 ${
-                isDark 
-                  ? 'bg-gradient-to-r from-neon-green to-purple-500'
-                  : 'bg-gradient-to-r from-emerald-500 to-purple-600'
-              }`}
-            />
-
-            <p className={`text-xs mt-2 ${
-              isDark ? 'text-gray-400' : 'text-gray-500'
-            }`}>Style confidence: 75%</p>
-          </motion.div>
-
-          {/* Bottom spacing for safe area */}
-          <div className="h-8" />
         </div>
       </div>
-
-
 
       {/* Navigation */}
       <Navbar onNavigation={onNavigation} />

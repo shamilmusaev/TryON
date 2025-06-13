@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, RotateCcw, X, Bookmark, Check } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import wardrobeStorage from "../services/wardrobeStorage";
 
 const ResultPage = ({ onBack, onNavigation, resultData }) => {
   const { isDark } = useTheme();
   const [isLoading, setIsLoading] = useState(true);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [resultImage, setResultImage] = useState(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   // Обрабатываем входящие данные результата
   useEffect(() => {
@@ -43,6 +45,18 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
       return () => clearTimeout(timer);
     }
   }, [resultData]);
+
+  const handleSave = () => {
+    if (resultImage && !isSaved) {
+      wardrobeStorage.saveItem({
+        url: resultImage.url,
+        title: "AI Result",
+      });
+      setIsSaved(true);
+      // Показать уведомление на 2 секунды
+      setTimeout(() => setIsSaved(false), 2000);
+    }
+  };
 
   const handleRetry = () => {
     if (!isLoading) {
@@ -170,7 +184,6 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
 
           {/* Bottom Section - кнопки */}
           <div className="px-4 py-4">
-            {/* Action Buttons */}
             <div className="flex space-x-3">
               {/* Back Button */}
               <motion.button
@@ -192,6 +205,21 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 <span>Назад</span>
               </motion.button>
 
+              {/* Save Button */}
+              <motion.button
+                onClick={handleSave}
+                disabled={isLoading || isSaved}
+                className={`w-16 h-16 flex items-center justify-center rounded-2xl transition-all duration-300 ${
+                  isSaved 
+                    ? 'bg-green-500 text-white' 
+                    : isDark ? 'apple-glass-dark' : 'apple-glass-light'
+                }`}
+                whileHover={{ scale: !isSaved ? 1.05 : 1 }}
+                whileTap={{ scale: !isSaved ? 0.95 : 1 }}
+              >
+                {isSaved ? <Check size={24} /> : <Bookmark size={24} />}
+              </motion.button>
+              
               {/* Retry Button */}
               <motion.button
                 onClick={handleRetry}

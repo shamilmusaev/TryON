@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, RotateCcw, X } from "lucide-react";
 import anime from "animejs";
 import replicateService from "../services/replicate"; // ACTIVATED FOR PRODUCTION
 import Logo from "./common/Logo";
 
 const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   const [progress, setProgress] = useState(0);
-  const [processingStatus, setProcessingStatus] = useState("starting");
+  const [processingStatus, setProcessingStatus] = useState("initializing");
   const [predictionId, setPredictionId] = useState(null);
   const [error, setError] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isRetrying, setIsRetrying] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [lowResBlurImage, setLowResBlurImage] = useState(null);
+  const [canCancel, setCanCancel] = useState(true);
+  const startGenerationTimeoutRef = useRef(null);
 
   // Refs для anime.js
   const blurOverlayRef = useRef(null);
@@ -26,7 +28,7 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
   }, [tryOnData]);
 
   // Определяем isGenerating здесь, до useEffect'ов
-  const isGenerating = !isCompleted && processingStatus !== "failed" && !error;
+  const isGenerating = !isCompleted && processingStatus !== "failed" && !error && !canCancel;
 
   // Создание низкоразрешенной версии изображения для blur-заглушки
   const createLowResBlurImage = useCallback((imageUrl) => {
@@ -156,74 +158,67 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
 
   // PRODUCTION REPLICATE CODE - USES OPTIMIZED IMAGES
   const startGeneration = useCallback(async () => {
+    if (canCancel) return; // Не запускаем, если еще можно отменить
+    
     try {
       console.log("🚀 Starting try-on generation...");
-      setError(null);
-      setGeneratedImage(null);
-      setProgress(0);
       setProcessingStatus("starting");
-      setIsCompleted(false);
-
-      // Используем оптимизированные изображения (уже обработанные оптимизатором iPhone)
+      
       const generation = await replicateService.generateTryOn(
-        tryOnData.personImage, // Уже оптимизированное изображение
-        tryOnData.outfitImage, // Уже оптимизированное изображение
-        "stylish outfit",
+        tryOnData.personImage.file,
+        tryOnData.outfitImage.file,
+        "stylish outfit"
       );
-
       setPredictionId(generation.id);
       setProcessingStatus("generating");
-
-      // Ожидаем завершения с отслеживанием прогресса
-      generation
-        .wait((newProgress) => {
-          console.log("Generation progress:", newProgress);
-          setProgress(newProgress);
-
-          // Обновляем статус на основе прогресса
-          if (newProgress <= 25) {
-            setProcessingStatus("analyzing");
-          } else if (newProgress <= 75) {
-            setProcessingStatus("generating");
-          } else if (newProgress < 100) {
-            setProcessingStatus("finalizing");
-          }
-          // При 100% handleSuccess установит completed и isCompleted = true
-        })
-        .then(handleSuccess)
-        .catch(handleError);
+      generation.wait((newProgress) => {
+        console.log("Generation progress:", newProgress);
+        setProgress(newProgress);
+        if (newProgress <= 25) setProcessingStatus("analyzing");
+        else if (newProgress <= 75) setProcessingStatus("generating");
+        else if (newProgress < 100) setProcessingStatus("finalizing");
+      }).then(handleSuccess).catch(handleError);
     } catch (error) {
       handleError(error);
     }
-  }, [tryOnData, handleSuccess, handleError]);
+  }, [tryOnData, handleSuccess, handleError, canCancel]);
 
-  // Запуск генерации при монтировании компонента
+  // Запуск 5-секундного таймера
   useEffect(() => {
-    if (tryOnData && !predictionId && !error && !generatedImage) {
-      setTimeout(() => {
-        startGeneration(); // PRODUCTION REPLICATE CALL
-      }, 1000);
+    if (tryOnData) {
+      startGenerationTimeoutRef.current = setTimeout(() => {
+        setCanCancel(false);
+      }, 5000);
+      return () => clearTimeout(startGenerationTimeoutRef.current);
     }
-  }, [tryOnData, predictionId, error, generatedImage, startGeneration]);
+  }, [tryOnData]);
+  
+  // Запуск генерации после того, как отмена стала невозможной
+  useEffect(() => {
+      if(!canCancel && !predictionId && !error) {
+          startGeneration();
+      }
+  }, [canCancel, predictionId, error, startGeneration]);
 
-  const handleRetry = () => {
-    if (!isGenerating) {
-      setIsRetrying(true);
-      setError(null);
-      setGeneratedImage(null);
-      setPredictionId(null);
-      setIsCompleted(false);
-      setTimeout(() => {
-        startGeneration();
-        setIsRetrying(false);
-      }, 500);
-    }
+  const handleCancelGeneration = () => {
+    clearTimeout(startGenerationTimeoutRef.current);
+    onBack();
   };
 
-  const handleBackClick = () => {
-    if (!isGenerating) {
-      onBack();
-    }
+  const handleRetry = () => {
+    setIsRetrying(true);
+    setError(null);
+    setGeneratedImage(null);
+    setPredictionId(null);
+    setIsCompleted(false);
+    setProgress(0);
+    setProcessingStatus("initializing");
+    setCanCancel(true); // Даем возможность отменить еще раз
+    
+    startGenerationTimeoutRef.current = setTimeout(() => {
+      setCanCancel(false);
+      setIsRetrying(false);
+    }, 5000);
   };
 
   const generateParticles = () => {
@@ -252,6 +247,14 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
       />
     ));
   };
+
+  const timelineEvents = [
+    { name: "Initializing", status: "initializing" },
+    { name: "Starting...", status: "starting" },
+    { name: "Analyzing Images", status: "analyzing" },
+    { name: "Creating Image", status: "generating" },
+    { name: "Finalizing Result", status: "finalizing" },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -388,55 +391,22 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
             {isGenerating && (
               <div className="text-center mb-4">
                 <AnimatePresence mode="wait">
-                  {processingStatus === "starting" && (
-                    <motion.p
-                      key="starting"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-gray-600 text-sm"
-                    >
-                      Preparing AI model...
-                    </motion.p>
-                  )}
-                  {processingStatus === "analyzing" && (
-                    <motion.p
-                      key="analyzing"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-gray-600 text-sm"
-                    >
-                      Analyzing images...
-                    </motion.p>
-                  )}
-                  {processingStatus === "generating" && (
-                    <motion.p
-                      key="generating"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-gray-600 text-sm"
-                    >
-                      <span>Creating image...</span>
-                      {progress > 0 && (
-                        <span className="block text-xs text-gray-500 mt-1">
-                          {Math.round(progress)}%
-                        </span>
-                      )}
-                    </motion.p>
-                  )}
-                  {processingStatus === "finalizing" && (
-                    <motion.p
-                      key="finalizing"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-gray-600 text-sm"
-                    >
-                      Finalizing result...
-                    </motion.p>
-                  )}
+                  {timelineEvents.map((event, index) => {
+                    const isActive =
+                      timelineEvents.findIndex((e) => e.status === processingStatus) >=
+                      index;
+                    return (
+                      <motion.p
+                        key={event.name}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 10 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="text-gray-600 text-sm"
+                      >
+                        {event.name}
+                      </motion.p>
+                    );
+                  })}
                   {error && (
                     <motion.p
                       key="error"
@@ -454,21 +424,21 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
 
             {/* Кнопки управления - всегда видимы */}
             <div className="flex space-x-3">
-              {/* Back Button - всегда показана */}
-              <motion.button
-                onClick={handleBackClick}
-                disabled={isGenerating}
-                className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
-                  isGenerating
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-800 text-white hover:bg-gray-900"
-                }`}
-                whileHover={!isGenerating ? { scale: 1.02 } : {}}
-                whileTap={!isGenerating ? { scale: 0.98 } : {}}
-              >
-                <ArrowLeft size={16} />
-                <span>Back</span>
-              </motion.button>
+              {/* Cancel Button - показана только во время генерации */}
+              {canCancel && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  onClick={handleCancelGeneration}
+                  className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation bg-red-500/90 text-white hover:bg-red-600"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <X size={16} />
+                  <span>Cancel</span>
+                </motion.button>
+              )}
 
               {/* Retry Button - всегда показана */}
               <motion.button
@@ -511,6 +481,47 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
           </div>
         </div>
       </div>
+
+      {/* Action Buttons */}
+      <motion.div
+        className="fixed bottom-0 left-0 right-0 z-50 p-4 pt-safe-bottom"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <div className="max-w-mobile mx-auto">
+          <AnimatePresence mode="wait">
+            {canCancel ? (
+              <motion.button
+                key="cancel"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                onClick={handleCancelGeneration}
+                className="w-full flex items-center justify-center py-4 px-6 rounded-2xl bg-red-500/90 backdrop-blur-lg text-white font-bold text-lg shadow-lg shadow-red-500/30"
+              >
+                <X size={20} className="mr-2" />
+                Cancel Generation
+              </motion.button>
+            ) : error ? (
+              <motion.div 
+                key="error-controls"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="grid grid-cols-2 gap-3"
+              >
+                <button onClick={onBack} className="w-full ...">
+                  <ArrowLeft size={20} className="mr-2" /> Back
+                </button>
+                <button onClick={handleRetry} className="w-full ...">
+                  <RotateCcw size={20} className="mr-2" /> Try Again
+                </button>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </motion.div>
     </div>
   );
 };
