@@ -205,19 +205,31 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 <span>Назад</span>
               </motion.button>
 
-              {/* Save Button */}
+              {/* Add to Wardrobe Button */}
               <motion.button
                 onClick={handleSave}
                 disabled={isLoading || isSaved}
-                className={`w-16 h-16 flex items-center justify-center rounded-2xl transition-all duration-300 ${
+                className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
                   isSaved 
                     ? 'bg-green-500 text-white' 
-                    : isDark ? 'apple-glass-dark' : 'apple-glass-light'
+                    : isDark
+                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 shadow-lg'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg'
                 }`}
-                whileHover={{ scale: !isSaved ? 1.05 : 1 }}
-                whileTap={{ scale: !isSaved ? 0.95 : 1 }}
+                whileHover={!isSaved ? { scale: 1.02 } : {}}
+                whileTap={!isSaved ? { scale: 0.98 } : {}}
               >
-                {isSaved ? <Check size={24} /> : <Bookmark size={24} />}
+                {isSaved ? (
+                  <>
+                    <Check size={16} />
+                    <span>Added to Wardrobe</span>
+                  </>
+                ) : (
+                  <>
+                    <Bookmark size={16} />
+                    <span>Add to my wardrobe</span>
+                  </>
+                )}
               </motion.button>
               
               {/* Retry Button */}

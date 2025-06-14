@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, RotateCcw, X } from "lucide-react";
 import anime from "animejs";
 import replicateService from "../services/replicate"; // ACTIVATED FOR PRODUCTION
+import wardrobeStorage from "../services/wardrobeStorage";
 import Logo from "./common/Logo";
 
 const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
@@ -77,6 +78,18 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
     setGeneratedImage(result.output);
     setIsCompleted(true);
 
+    // Автоматически сохраняем результат в гардероб
+    if (result.output) {
+      const imageUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+      wardrobeStorage.saveItem({
+        url: imageUrl,
+        title: "AI Generated Look",
+        category: tryOnData.category || 'upper_body',
+        generatedAt: new Date().toISOString(),
+      });
+      console.log("💾 Результат автоматически сохранен в гардероб");
+    }
+
     // Быстро завершаем blur анимацию за 2 секунды
     if (blurOverlayRef.current) {
       console.log("🚀 Быстро завершаю blur анимацию...");
@@ -95,10 +108,24 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
           if (blurOverlayRef.current) {
             blurOverlayRef.current.style.display = "none";
           }
+          
+          // Переходим к ResultPage через 2.5 секунды после завершения анимации
+          setTimeout(() => {
+            if (onComplete) {
+              onComplete(result);
+            }
+          }, 500);
         },
       });
+    } else {
+      // Если нет blur overlay, переходим сразу
+      setTimeout(() => {
+        if (onComplete) {
+          onComplete(result);
+        }
+      }, 2500);
     }
-  }, []);
+  }, [onComplete]);
 
   const handleError = useCallback((error) => {
     console.error("❌ Try-on generation failed:", error);
@@ -167,7 +194,9 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
       const generation = await replicateService.generateTryOn(
         tryOnData.personImage.file,
         tryOnData.outfitImage.file,
-        "stylish outfit"
+        "stylish outfit",
+        tryOnData.category,
+        30
       );
       setPredictionId(generation.id);
       setProcessingStatus("generating");
@@ -379,6 +408,12 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
                       Generation Failed
                     </p>
                     <p className="text-gray-600 text-sm mb-4">{error}</p>
+                    <button 
+                      onClick={handleRetry} 
+                      className="mt-2 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                    >
+                      Try Again
+                    </button>
                   </div>
                 </div>
               )}
@@ -386,97 +421,49 @@ const ProcessingPage = ({ onBack, onComplete, tryOnData }) => {
           </div>
 
           {/* Нижняя секция с кнопками и статусом */}
-          <div className="px-4 py-4 bg-white border-t border-gray-100">
+          <div className="px-4 py-4 bg-white border-t border-gray-100 flex flex-col items-center">
             {/* Статус генерации - только во время генерации */}
-            {isGenerating && (
+            {!isCompleted && !error && (
               <div className="text-center mb-4">
-                <AnimatePresence mode="wait">
-                  {timelineEvents.map((event, index) => {
-                    const isActive =
-                      timelineEvents.findIndex((e) => e.status === processingStatus) >=
-                      index;
-                    return (
-                      <motion.p
-                        key={event.name}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 10 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="text-gray-600 text-sm"
-                      >
-                        {event.name}
-                      </motion.p>
-                    );
-                  })}
-                  {error && (
-                    <motion.p
-                      key="error"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="text-red-600 text-sm font-medium"
-                    >
-                      Something went wrong. Please try again.
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+                {/* Анимация текста статуса (можно оставить простой текст) */}
+                <p className="text-gray-600 text-sm">{processingStatus}</p>
               </div>
             )}
 
-            {/* Кнопки управления - всегда видимы */}
-            <div className="flex space-x-3">
-              {/* Cancel Button - показана только во время генерации */}
-              {canCancel && (
+            {/* Главная кнопка действия */}
+            <div className="w-full max-w-sm">
                 <motion.button
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={handleCancelGeneration}
-                  className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation bg-red-500/90 text-white hover:bg-red-600"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <X size={16} />
-                  <span>Cancel</span>
-                </motion.button>
-              )}
-
-              {/* Retry Button - всегда показана */}
-              <motion.button
-                onClick={handleRetry}
-                disabled={isGenerating}
-                className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm transition-all touch-manipulation ${
-                  isGenerating
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-                whileHover={!isGenerating ? { scale: 1.02 } : {}}
-                whileTap={!isGenerating ? { scale: 0.98 } : {}}
-              >
-                <RotateCcw
-                  size={16}
-                  className={isRetrying ? "animate-spin" : ""}
-                />
-
-                <span>{isRetrying ? "Retrying..." : "Try Again"}</span>
-              </motion.button>
-
-              {/* Add to Library Button - показана только после завершения */}
-              {isCompleted && !error && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  key={isCompleted ? "back" : "cancel"}
                   onClick={() => {
-                    // Здесь будет логика добавления в библиотеку
-                    console.log("Adding to library...");
+                    if (isCompleted || error) {
+                      onBack();
+                    } else if (canCancel) {
+                      handleCancelGeneration();
+                    }
                   }}
-                  className="flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-medium text-sm bg-green-600 text-white hover:bg-green-700 transition-all touch-manipulation"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  disabled={!canCancel && !isCompleted && !error}
+                  className={`w-full flex items-center justify-center py-3 px-6 rounded-xl font-bold text-base shadow-md transition-all duration-300
+                    ${
+                      isCompleted || error
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white' // Состояние "Back to home"
+                        : canCancel
+                        ? 'bg-red-500 hover:bg-red-600 text-white' // Состояние "Cancel"
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed' // Состояние "Disabled"
+                    }
+                  `}
                 >
-                  <span>+</span>
-                  <span>Add to Library</span>
+                  {isCompleted || error ? (
+                    <>
+                      <ArrowLeft size={20} className="mr-2" />
+                      Back to home page
+                    </>
+                  ) : (
+                    <>
+                      <X size={20} className="mr-2" />
+                      Cancel Generation
+                    </>
+                  )}
                 </motion.button>
-              )}
             </div>
           </div>
         </div>

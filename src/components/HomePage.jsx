@@ -4,6 +4,7 @@ import { Sun, Moon } from "lucide-react";
 import ActionGrid from "./ActionGrid";
 import AIRecommendations from "./AIRecommendations";
 import MyUploadedImages from "./MyUploadedImages";
+import MyWardrobeModal from "./MyWardrobeModal";
 import Navbar from "./common/Navbar";
 import Logo from "./common/Logo";
 import VirtualTryOn from './VirtualTryOn';
@@ -19,6 +20,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
   const { toggleTheme, isDark } = useTheme();
   const [currentTime, setCurrentTime] = useState("");
   const [showUploadedImages, setShowUploadedImages] = useState(false);
+  const [showWardrobe, setShowWardrobe] = useState(false);
   const [userImages, setUserImages] = useState([]);
   const [wardrobeItems, setWardrobeItems] = useState([]);
   const [selectedUserImage, setSelectedUserImage] = useState(null);
@@ -66,7 +68,10 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
       setUserImages(currentImages);
       setShowUploadedImages(true);
     } else if (actionId === 'wardrobe') {
-      onNavigation('wardrobe');
+      // Обновляем элементы гардероба перед показом модального окна
+      const currentItems = wardrobeStorage.getAllItems();
+      setWardrobeItems(currentItems);
+      setShowWardrobe(true);
     }
   };
 
@@ -80,6 +85,7 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
 
   const handleBackToHome = () => {
     setShowUploadedImages(false);
+    setShowWardrobe(false);
   };
 
   const handleRecommendationClick = (recommendationId) => {
@@ -259,6 +265,16 @@ const HomePage = ({ onStartProcessing, onNavigation }) => {
           <MyUploadedImages
             userImages={userImages}
             onImageSelect={handleImageSelect}
+            onBackToHome={handleBackToHome}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* My Wardrobe Modal */}
+      <AnimatePresence>
+        {showWardrobe && (
+          <MyWardrobeModal
+            wardrobeItems={wardrobeItems}
             onBackToHome={handleBackToHome}
           />
         )}

@@ -87,9 +87,10 @@ class ReplicateService {
   }
 
   // Основной метод для генерации try-on
-  async generateTryOn(personImage, clothingImage, garmentDescription = "clothing item") {
+  async generateTryOn(personImage, clothingImage, garmentDescription = "clothing item", category = 'upper_body', steps = 30) {
     try {
       console.log('🚀 Starting try-on generation with n8n + Replicate...');
+      console.log(`👕 Category: ${category}, 👟 Steps: ${steps}`);
       
       // Конвертируем изображения в base64 data URLs если они File объекты
       const personImageData = await this.fileToDataURL(personImage);
@@ -104,7 +105,9 @@ class ReplicateService {
         body: JSON.stringify({
           human_img: personImageData,
           garm_img: clothingImageData,
-          garment_des: garmentDescription
+          garment_des: garmentDescription,
+          category: category,
+          steps: steps
         })
       });
 

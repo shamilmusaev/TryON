@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, CheckCircle, Plus, X, Shirt, Palette, Scissors, Loader } from 'lucide-react';
+import heic2any from 'heic2any';
 import { useTheme } from '../contexts/ThemeContext';
 import imageConverter from '../services/imageConverter';
 import userImageStorage from '../services/userImageStorage';
@@ -10,9 +11,12 @@ const UploadZone = ({ onDrop, image, title, description, onClear, isUploaded }) 
   const { isDark } = useTheme();
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': ['.jpeg', '.jpg', '.png'] },
+    accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.heic'] },
     multiple: false,
   });
+
+  const showLoader = image && image.isProcessing;
+  const showImage = image && image.url;
 
   return (
     <div
@@ -24,7 +28,7 @@ const UploadZone = ({ onDrop, image, title, description, onClear, isUploaded }) 
     >
       <input {...getInputProps()} />
       <AnimatePresence>
-        {image ? (
+        {showImage ? (
           <>
             <motion.img
               src={image.url}
@@ -35,22 +39,31 @@ const UploadZone = ({ onDrop, image, title, description, onClear, isUploaded }) 
               className="absolute inset-0 w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
-            <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => { e.stopPropagation(); onClear(); }}
-              className="absolute top-2 right-2 z-10 p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-white"
-            >
-              <X size={16} />
-            </motion.button>
-             <motion.div 
-              initial={{opacity:0}}
-              animate={{opacity:1}}
-              transition={{delay:0.2}}
-              className="absolute bottom-2 left-2 z-10 flex items-center p-1.5 bg-green-500/80 rounded-full text-white text-xs font-bold">
-              <CheckCircle size={14} className="mr-1" />
-              Uploaded
-            </motion.div>
+            {showLoader && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
+                <Loader className="animate-spin text-white" size={32} />
+              </div>
+            )}
+            {!showLoader && (
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={(e) => { e.stopPropagation(); onClear(); }}
+                className="absolute top-2 right-2 z-10 p-1.5 bg-white/20 hover:bg-white/30 rounded-full text-white"
+              >
+                <X size={16} />
+              </motion.button>
+            )}
+             {!showLoader && (
+              <motion.div 
+                initial={{opacity:0}}
+                animate={{opacity:1}}
+                transition={{delay:0.2}}
+                className="absolute bottom-2 left-2 z-10 flex items-center p-1.5 bg-green-500/80 rounded-full text-white text-xs font-bold">
+                <CheckCircle size={14} className="mr-1" />
+                Uploaded
+              </motion.div>
+             )}
           </>
         ) : (
           <motion.div 
@@ -64,13 +77,20 @@ const UploadZone = ({ onDrop, image, title, description, onClear, isUploaded }) 
                 <p className="font-semibold text-green-400">Drop it here!</p>
               </motion.div>
             ) : (
-              <>
-                <div className={`p-3 rounded-full mb-3 transition-colors duration-300 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                  <Plus size={24} />
+               showLoader ? (
+                <div className="flex flex-col items-center">
+                  <Loader size={32} className="mb-2 animate-spin" />
+                  <p className="font-semibold text-sm">Processing...</p>
                 </div>
-                <p className="font-semibold text-sm text-gray-700 dark:text-gray-300">{title}</p>
-                <p className="text-xs mt-1">{description}</p>
-              </>
+              ) : (
+                <>
+                  <div className={`p-3 rounded-full mb-3 transition-colors duration-300 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                    <Plus size={24} />
+                  </div>
+                  <p className="font-semibold text-sm text-gray-700 dark:text-gray-300">{title}</p>
+                  <p className="text-xs mt-1">{description}</p>
+                </>
+              )
             )}
           </motion.div>
         )}
@@ -113,41 +133,54 @@ const VirtualTryOn = ({ onNavigation, selectedImage }) => {
   }, [selectedImage]);
 
   const handleDrop = async (acceptedFiles, type) => {
-    const file = acceptedFiles[0];
+    let file = acceptedFiles[0];
     if (!file) return;
 
     const setter = type === 'user' ? setUserPhoto : setOutfitPhoto;
     const storageType = type === 'user' ? 'person' : 'outfit';
 
-    // Оптимистичный UI: показываем временный URL, пока идет обработка
-    const tempUrl = URL.createObjectURL(file);
-    setter({ url: tempUrl, name: file.name, isProcessing: true });
+    setter({ name: file.name, isProcessing: true, url: null });
+
+    let tempUrl = null;
 
     try {
-      // 1. Обрабатываем изображение (оптимизация)
+      const isHeic = file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic');
+      if (isHeic) {
+        console.log(`HEIC файл обнаружен, начинаю конвертацию: ${file.name}`);
+        const conversionResult = await heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.9,
+        });
+        const convertedBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+        file = new File([convertedBlob], `${file.name.split('.')[0]}.jpeg`, { type: 'image/jpeg' });
+        console.log(`HEIC успешно сконвертирован в JPEG: ${file.name}`);
+      }
+
+      tempUrl = URL.createObjectURL(file);
+      setter({ url: tempUrl, name: file.name, isProcessing: true });
+
       const processedFile = await imageConverter.processImage(file);
-      // 2. Конвертируем в base64 для хранения
       const base64Url = await imageConverter.fileToBase64(processedFile);
       
-      const imageData = {
+      const finalImageData = {
         file: processedFile,
-        url: base64Url, // Используем base64
+        url: base64Url,
         name: processedFile.name,
         isProcessed: processedFile !== file,
         isProcessing: false,
       };
 
-      // 3. Сохраняем в storage (теперь с base64)
-      userImageStorage.saveImage(imageData, storageType);
-      setter(imageData);
+      userImageStorage.saveImage(finalImageData, storageType);
+      setter(finalImageData);
 
     } catch (error) {
       console.error(`Ошибка обработки ${type} изображения:`, error);
-      // Откат к оригинальному файлу без обработки
-      const base64Url = await imageConverter.fileToBase64(file);
-      const imageData = { file, url: base64Url, name: file.name, isProcessed: false, isProcessing: false };
-      userImageStorage.saveImage(imageData, storageType);
-      setter(imageData);
+      setter(null);
+    } finally {
+      if (tempUrl) {
+        URL.revokeObjectURL(tempUrl);
+      }
     }
   };
 
@@ -187,6 +220,7 @@ const VirtualTryOn = ({ onNavigation, selectedImage }) => {
         onNavigation('processing', {
           personImage: { ...userPhoto, file: userFile },
           outfitImage: { ...outfitPhoto, file: outfitFile },
+          category: activeCategory || 'upper_body',
         });
 
       } catch (error) {
@@ -247,25 +281,22 @@ const VirtualTryOn = ({ onNavigation, selectedImage }) => {
                 transition={{duration: 0.4}}
                 className="flex justify-center space-x-3 mb-6"
             >
-              <CategoryButton label="Upper" icon={<Shirt size={16} />} onClick={() => setActiveCategory('upper')} active={activeCategory === 'upper'} />
-              <CategoryButton label="Lower" icon={<Palette size={16} />} onClick={() => setActiveCategory('lower')} active={activeCategory === 'lower'}/>
-              <CategoryButton label="Dresses" icon={<Scissors size={16} />} onClick={() => setActiveCategory('dresses')} active={activeCategory === 'dresses'}/>
+              <CategoryButton label="Upper" icon={<Shirt size={16} />} onClick={() => setActiveCategory('upper_body')} active={activeCategory === 'upper_body'} />
+              <CategoryButton label="Lower" icon={<Palette size={16} />} onClick={() => setActiveCategory('lower_body')} active={activeCategory === 'lower_body'} />
+              <CategoryButton label="Dress" icon={<Scissors size={16} />} onClick={() => setActiveCategory('dress')} active={activeCategory === 'dress'} />
             </motion.div>
           )}
         </AnimatePresence>
 
         <motion.button
-          disabled={!bothPhotosUploaded || isProcessing}
           onClick={handleCreateMagic}
-          whileHover={{ scale: bothPhotosUploaded && !isProcessing ? 1.03 : 1, y: bothPhotosUploaded && !isProcessing ? -2 : 0 }}
-          whileTap={{ scale: bothPhotosUploaded && !isProcessing ? 0.98 : 1 }}
-          className={`w-full font-bold py-4 rounded-2xl text-lg transition-all duration-300 ease-in-out relative overflow-hidden group
-            ${bothPhotosUploaded 
-              ? 'bg-gradient-to-r from-green-400 to-teal-500 text-white shadow-lg shadow-green-500/30' 
-              : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+          disabled={!bothPhotosUploaded || !activeCategory || isProcessing}
+          className={`w-full py-3.5 rounded-xl text-lg font-bold transition-all duration-300 flex items-center justify-center
+            ${!bothPhotosUploaded || !activeCategory || isProcessing
+              ? (isDark ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-gray-200 text-gray-400 cursor-not-allowed')
+              : (isDark ? 'bg-gradient-to-r from-green-400 to-teal-500 hover:from-green-500 hover:to-teal-600 text-white shadow-lg shadow-green-500/20' : 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white shadow-lg shadow-emerald-500/30')
             }
-            ${isProcessing ? 'cursor-wait' : ''}
-            `}
+          `}
         >
           <AnimatePresence mode="wait">
             <motion.span

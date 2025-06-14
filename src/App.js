@@ -6,7 +6,7 @@ import OnboardingPage from './components/OnboardingPage';
 import HomePage from './components/HomePage';
 import ProcessingPage from './components/ProcessingPage';
 import ResultPage from './components/ResultPage';
-import MyWardrobePage from './components/MyWardrobePage';
+
 
 function AppContent() {
   const { isDark } = useTheme();
@@ -132,8 +132,7 @@ function AppContent() {
           />
         );
 
-      case 'wardrobe':
-        return <MyWardrobePage onBack={handleBack} />;
+
 
       case 'onboarding':
         return (
