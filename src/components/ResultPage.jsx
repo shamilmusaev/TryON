@@ -171,9 +171,10 @@ const ResultPage = ({ onBack, onNavigation, tryOnData }) => {
       <div className="pt-safe-top pb-safe-bottom">
         <div className="flex flex-col h-screen">
           {/* Result Image Section */}
-          <div className={`flex-1 relative overflow-hidden ${
-            isDark ? 'apple-glass-dark' : 'apple-glass-light'
-          } m-4 rounded-3xl shadow-2xl`}>
+          <div className={`flex-1 flex items-center justify-center p-4`}>
+            <div className={`relative max-w-sm w-full aspect-[3/4] overflow-hidden ${
+              isDark ? 'apple-glass-dark' : 'apple-glass-light'
+            } rounded-3xl shadow-2xl`}>
             {!isCompleted ? (
               // Processing State
               <div className="w-full h-full flex items-center justify-center p-4">
@@ -265,7 +266,7 @@ const ResultPage = ({ onBack, onNavigation, tryOnData }) => {
                 <img
                   src={resultImage.url}
                   alt={resultImage.title}
-                  className="w-full h-full object-cover rounded-3xl"
+                  className="w-full h-full object-contain rounded-3xl"
                 />
 
                 {/* Success indicator */}
@@ -296,6 +297,7 @@ const ResultPage = ({ onBack, onNavigation, tryOnData }) => {
                 </div>
               </motion.div>
             )}
+            </div>
           </div>
 
           {/* Bottom Section - кнопки всегда видны */}
