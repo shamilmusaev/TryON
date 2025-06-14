@@ -217,7 +217,7 @@ const VirtualTryOn = ({ onNavigation, selectedImage }) => {
           getFile(outfitPhoto)
         ]);
 
-        onNavigation('processing', {
+        onNavigation('result', {
           personImage: { ...userPhoto, file: userFile },
           outfitImage: { ...outfitPhoto, file: outfitFile },
           category: activeCategory || 'upper_body',
