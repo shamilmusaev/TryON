@@ -4,15 +4,13 @@ import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import './index.css';
 import OnboardingPage from './components/OnboardingPage';
 import HomePage from './components/HomePage';
-import ProcessingPage from './components/ProcessingPage';
 import ResultPage from './components/ResultPage';
 
 
 function AppContent() {
   const { isDark } = useTheme();
-  const [currentView, setCurrentView] = useState('home'); // home, processing, result, onboarding, wardrobe
+  const [currentView, setCurrentView] = useState('home'); // home, result, onboarding, wardrobe
   const [tryOnData, setTryOnData] = useState(null); // Данные для генерации
-  const [resultData, setResultData] = useState(null); // Результаты генерации
 
   // Оптимизация для Safari iOS
   useEffect(() => {
@@ -64,12 +62,8 @@ function AppContent() {
   const handleNavigation = (page, data = null) => {
     console.log(`📱 Navigating to: ${page}`, data ? '(with data)' : '');
     
-    if (data) {
-      if (page === 'processing') {
-        setTryOnData(data);
-      } else if (page === 'result') {
-        setResultData(data);
-      }
+    if (data && page === 'result') {
+      setTryOnData(data);
     }
     
     setCurrentView(page);
@@ -83,16 +77,9 @@ function AppContent() {
 
 
 
-  // Завершение обработки и переход к результату
-  const handleProcessingComplete = (generationResult) => {
-    console.log('✅ Processing complete, showing result...', generationResult);
-    handleNavigation('result', generationResult);
-  };
-
   // Возврат на предыдущую страницу
   const handleBack = () => {
     switch (currentView) {
-      case 'processing':
       case 'result':
       case 'onboarding':
       case 'wardrobe':
@@ -114,25 +101,14 @@ function AppContent() {
           />
         );
 
-      case 'processing':
-        return (
-          <ProcessingPage
-            onBack={handleBack}
-            onComplete={handleProcessingComplete}
-            tryOnData={tryOnData}
-          />
-        );
-
       case 'result':
         return (
           <ResultPage
             onBack={handleBack}
             onNavigation={handleNavigation}
-            resultData={resultData}
+            tryOnData={tryOnData}
           />
         );
-
-
 
       case 'onboarding':
         return (

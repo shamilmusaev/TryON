@@ -1,77 +1,146 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, RotateCcw, X, Bookmark, Check } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import replicateService from "../services/replicate";
 import wardrobeStorage from "../services/wardrobeStorage";
 
-const ResultPage = ({ onBack, onNavigation, resultData }) => {
+const ResultPage = ({ onBack, onNavigation, tryOnData }) => {
   const { isDark } = useTheme();
-  const [isLoading, setIsLoading] = useState(true);
+  
+  // Processing states
+  const [progress, setProgress] = useState(0);
+  const [processingStatus, setProcessingStatus] = useState("initializing");
+  const [predictionId, setPredictionId] = useState(null);
+  const [error, setError] = useState(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [canCancel, setCanCancel] = useState(true);
+  const startGenerationTimeoutRef = useRef(null);
+  
+  // UI states
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [resultImage, setResultImage] = useState(null);
   const [isSaved, setIsSaved] = useState(false);
 
-  // Обрабатываем входящие данные результата
+  // Отладочный лог для проверки данных
   useEffect(() => {
-    console.log("🔍 ResultPage получил данные:", resultData);
+    console.log("🔍 ResultPage tryOnData:", tryOnData);
+  }, [tryOnData]);
 
-    if (resultData && resultData.output) {
-      // Если есть готовый результат, сразу показываем его
-      const imageUrl = Array.isArray(resultData.output)
-        ? resultData.output[0]
-        : resultData.output;
-      setResultImage({
+  // Определяем isGenerating (используется для логики, но можно убрать если не нужно)
+  // const isGenerating = !isCompleted && processingStatus !== "failed" && !error && !canCancel;
+
+  const handleSuccess = useCallback((result) => {
+    console.log("✅ Try-on generation completed:", result);
+
+    setProgress(100);
+    setProcessingStatus("completed");
+    setIsCompleted(true);
+
+    // Устанавливаем результат
+    const imageUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+    setResultImage({
+      url: imageUrl,
+      title: "AI Generated Result",
+      generatedAt: new Date().toISOString(),
+      predictionId: result.id,
+    });
+
+    // Автоматически сохраняем результат в гардероб
+    if (result.output) {
+      wardrobeStorage.saveItem({
         url: imageUrl,
-        title: "AI Generated Result",
-        generatedAt: resultData.generatedAt,
-        predictionId: resultData.id,
+        title: "AI Generated Look",
+        category: tryOnData?.category || 'upper_body',
+        generatedAt: new Date().toISOString(),
       });
-      setIsLoading(false);
-    } else {
-      // Если результата нет, показываем состояние загрузки
-      console.log("⏳ Результат еще генерируется...");
-
-      // Симуляция ожидания результата (в реальном приложении это будет приходить от ProcessingPage)
-      const timer = setTimeout(() => {
-        // Fallback изображение если результат так и не пришел
-        setResultImage({
-          url: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&h=800&fit=crop&crop=face",
-          title: "Demo Result",
-          generatedAt: new Date().toISOString(),
-        });
-        setIsLoading(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
+      console.log("💾 Result automatically saved to wardrobe");
     }
-  }, [resultData]);
+  }, [tryOnData]);
+
+  const handleError = useCallback((error) => {
+    console.error("❌ Try-on generation failed:", error);
+    setError(error.message || "Generation failed");
+    setProcessingStatus("failed");
+    setIsCompleted(true);
+  }, []);
+
+  // PRODUCTION REPLICATE CODE
+  const startGeneration = useCallback(async () => {
+    if (canCancel) return;
+    
+    try {
+      console.log("🚀 Starting try-on generation...");
+      setProcessingStatus("starting");
+      
+      const generation = await replicateService.generateTryOn(
+        tryOnData.personImage.file,
+        tryOnData.outfitImage.file,
+        "stylish outfit",
+        tryOnData.category,
+        30
+      );
+      setPredictionId(generation.id);
+      setProcessingStatus("generating");
+      generation.wait((newProgress) => {
+        console.log("Generation progress:", newProgress);
+        setProgress(newProgress);
+        if (newProgress <= 25) setProcessingStatus("analyzing");
+        else if (newProgress <= 75) setProcessingStatus("generating");
+        else if (newProgress < 100) setProcessingStatus("finalizing");
+      }).then(handleSuccess).catch(handleError);
+    } catch (error) {
+      handleError(error);
+    }
+  }, [tryOnData, handleSuccess, handleError, canCancel]);
+
+  // Запуск 5-секундного таймера
+  useEffect(() => {
+    if (tryOnData) {
+      startGenerationTimeoutRef.current = setTimeout(() => {
+        setCanCancel(false);
+      }, 5000);
+      return () => clearTimeout(startGenerationTimeoutRef.current);
+    }
+  }, [tryOnData]);
+  
+  // Запуск генерации после того, как отмена стала невозможной
+  useEffect(() => {
+      if(!canCancel && !predictionId && !error) {
+          startGeneration();
+      }
+  }, [canCancel, predictionId, error, startGeneration]);
+
+  const handleCancelGeneration = () => {
+    clearTimeout(startGenerationTimeoutRef.current);
+    onBack();
+  };
 
   const handleSave = () => {
-    if (resultImage && !isSaved) {
+    if (resultImage && !isSaved && isCompleted) {
       wardrobeStorage.saveItem({
         url: resultImage.url,
         title: "AI Result",
       });
       setIsSaved(true);
-      // Показать уведомление на 2 секунды
       setTimeout(() => setIsSaved(false), 2000);
     }
   };
 
   const handleRetry = () => {
-    if (!isLoading) {
-      onNavigation("upload");
+    if (isCompleted) {
+      onNavigation("home");
     }
   };
 
   const handleBack = () => {
-    if (!isLoading) {
+    if (canCancel || isCompleted) {
       onBack();
     }
   };
 
   const handleImageClick = () => {
-    if (!isLoading && resultImage) {
+    if (isCompleted && resultImage) {
       setShowFullscreen(true);
     }
   };
@@ -80,59 +149,108 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
     setShowFullscreen(false);
   };
 
+  const getStatusText = () => {
+    switch (processingStatus) {
+      case "initializing": return "Initializing...";
+      case "starting": return "Starting generation...";
+      case "analyzing": return "Analyzing images...";
+      case "generating": return "Generating result...";
+      case "finalizing": return "Finalizing...";
+      case "completed": return "Generation complete!";
+      case "failed": return "Generation failed";
+      default: return "Processing...";
+    }
+  };
+
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isDark 
         ? 'bg-gradient-to-br from-gray-900 via-purple-900/20 to-black' 
         : 'bg-gradient-to-br from-blue-50 via-purple-50/30 to-white'
     }`}>
-      {/* Safe area для iPhone 14 Pro */}
       <div className="pt-safe-top pb-safe-bottom">
         <div className="flex flex-col h-screen">
-          {/* Result Image Section - занимает основную часть экрана */}
+          {/* Result Image Section */}
           <div className={`flex-1 relative overflow-hidden ${
             isDark ? 'apple-glass-dark' : 'apple-glass-light'
           } m-4 rounded-3xl shadow-2xl`}>
-            {isLoading ? (
-              // Loading State
+            {!isCompleted ? (
+              // Processing State
               <div className="w-full h-full flex items-center justify-center p-4">
                 <div className="text-center max-w-sm">
-                  <motion.div
-                    className={`w-16 h-16 mx-auto mb-4 border-4 border-t-transparent rounded-full ${
-                      isDark ? 'border-purple-400' : 'border-purple-500'
-                    }`}
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                  />
-
-                  <h3 className={`text-lg font-semibold mb-2 ${
-                    isDark ? 'text-white' : 'text-gray-700'
-                  }`}>
-                    Генерируем результат
-                  </h3>
-                  <p className={`text-sm mb-3 ${
-                    isDark ? 'text-gray-300' : 'text-gray-500'
-                  }`}>
-                    Пожалуйста, подождите...
-                  </p>
-                  <div className="w-full">
-                    <div className={`rounded-full h-2 ${
-                      isDark ? 'bg-gray-700' : 'bg-gray-200'
-                    }`}>
+                  {canCancel ? (
+                    // Cancel countdown
+                    <div>
                       <motion.div
-                        className={`h-2 rounded-full ${
-                          isDark ? 'bg-purple-400' : 'bg-purple-500'
+                        className={`w-16 h-16 mx-auto mb-4 border-4 border-t-transparent rounded-full ${
+                          isDark ? 'border-red-400' : 'border-red-500'
                         }`}
-                        initial={{ width: "0%" }}
-                        animate={{ width: "100%" }}
-                        transition={{ duration: 3, ease: "easeInOut" }}
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                       />
+                      <h3 className={`text-lg font-semibold mb-2 ${
+                        isDark ? 'text-white' : 'text-gray-700'
+                      }`}>
+                        Preparing generation...
+                      </h3>
+                      <p className={`text-sm mb-3 ${
+                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      }`}>
+                        You can cancel within 5 seconds
+                      </p>
                     </div>
-                  </div>
+                  ) : (
+                    // Generation in progress
+                    <div>
+                      <motion.div
+                        className={`w-16 h-16 mx-auto mb-4 border-4 border-t-transparent rounded-full ${
+                          isDark ? 'border-purple-400' : 'border-purple-500'
+                        }`}
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      />
+                      <h3 className={`text-lg font-semibold mb-2 ${
+                        isDark ? 'text-white' : 'text-gray-700'
+                      }`}>
+                        {getStatusText()}
+                      </h3>
+                      <p className={`text-sm mb-3 ${
+                        isDark ? 'text-gray-300' : 'text-gray-500'
+                      }`}>
+                        Progress: {progress}%
+                      </p>
+                      <div className="w-full">
+                        <div className={`rounded-full h-2 ${
+                          isDark ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}>
+                          <motion.div
+                            className={`h-2 rounded-full ${
+                              isDark ? 'bg-purple-400' : 'bg-purple-500'
+                            }`}
+                            initial={{ width: "0%" }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.5, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className={`mt-4 p-3 rounded-xl ${
+                      isDark ? 'bg-red-900/50 text-red-300' : 'bg-red-100 text-red-700'
+                    }`}>
+                      <p className="text-sm">{error}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -151,22 +269,20 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 />
 
                 {/* Success indicator */}
-                {!isLoading && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3, duration: 0.4 }}
-                    className={`absolute top-4 right-4 p-3 rounded-2xl shadow-lg ${
-                      isDark ? 'apple-glass-dark' : 'apple-glass-light'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 flex items-center justify-center text-sm font-bold ${
-                      isDark ? 'text-green-400' : 'text-green-600'
-                    }`}>
-                      ✓
-                    </div>
-                  </motion.div>
-                )}
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  className={`absolute top-4 right-4 p-3 rounded-2xl shadow-lg ${
+                    isDark ? 'apple-glass-dark' : 'apple-glass-light'
+                  }`}
+                >
+                  <div className={`w-5 h-5 flex items-center justify-center text-sm font-bold ${
+                    isDark ? 'text-green-400' : 'text-green-600'
+                  }`}>
+                    ✓
+                  </div>
+                </motion.div>
 
                 {/* Tap hint overlay */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -175,22 +291,22 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                       ? 'bg-black/60 text-white border border-white/20' 
                       : 'bg-white/80 text-gray-800 border border-gray-200/50'
                   }`}>
-                    Нажмите для увеличения
+                    Tap to enlarge
                   </div>
                 </div>
               </motion.div>
             )}
           </div>
 
-          {/* Bottom Section - кнопки */}
+          {/* Bottom Section - кнопки всегда видны */}
           <div className="px-4 py-4">
             <div className="flex space-x-3">
               {/* Back Button */}
               <motion.button
-                onClick={handleBack}
-                disabled={isLoading}
+                onClick={canCancel ? handleCancelGeneration : handleBack}
+                disabled={!canCancel && !isCompleted}
                 className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
-                  isLoading
+                  (!canCancel && !isCompleted)
                     ? isDark 
                       ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
                       : "bg-gray-300/50 text-gray-500 cursor-not-allowed"
@@ -198,26 +314,30 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                       ? "apple-glass-dark border border-white/10 text-white hover:border-white/20"
                       : "apple-glass-light border border-gray-200/50 text-gray-700 hover:border-gray-300"
                 }`}
-                whileHover={!isLoading ? { scale: 1.02 } : {}}
-                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                whileHover={(canCancel || isCompleted) ? { scale: 1.02 } : {}}
+                whileTap={(canCancel || isCompleted) ? { scale: 0.98 } : {}}
               >
                 <ArrowLeft size={16} />
-                <span>Назад</span>
+                <span>{canCancel ? "Cancel" : "Back"}</span>
               </motion.button>
 
               {/* Add to Wardrobe Button */}
               <motion.button
                 onClick={handleSave}
-                disabled={isLoading || isSaved}
+                disabled={!isCompleted || isSaved}
                 className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
                   isSaved 
                     ? 'bg-green-500 text-white' 
-                    : isDark
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 shadow-lg'
-                      : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg'
+                    : !isCompleted
+                      ? isDark 
+                        ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
+                        : "bg-gray-300/50 text-gray-500 cursor-not-allowed"
+                      : isDark
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-500 hover:to-pink-500 shadow-lg'
+                        : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 shadow-lg'
                 }`}
-                whileHover={!isSaved ? { scale: 1.02 } : {}}
-                whileTap={!isSaved ? { scale: 0.98 } : {}}
+                whileHover={isCompleted && !isSaved ? { scale: 1.02 } : {}}
+                whileTap={isCompleted && !isSaved ? { scale: 0.98 } : {}}
               >
                 {isSaved ? (
                   <>
@@ -227,7 +347,7 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                 ) : (
                   <>
                     <Bookmark size={16} />
-                    <span>Add to my wardrobe</span>
+                    <span>Add to Wardrobe</span>
                   </>
                 )}
               </motion.button>
@@ -235,9 +355,9 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               {/* Retry Button */}
               <motion.button
                 onClick={handleRetry}
-                disabled={isLoading}
+                disabled={!isCompleted}
                 className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-2xl font-medium text-sm transition-all touch-manipulation ${
-                  isLoading
+                  !isCompleted
                     ? isDark 
                       ? "bg-gray-600/50 text-gray-400 cursor-not-allowed"
                       : "bg-gray-300/50 text-gray-500 cursor-not-allowed"
@@ -245,11 +365,11 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                       ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-500 hover:to-blue-500 shadow-lg"
                       : "bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 shadow-lg"
                 }`}
-                whileHover={!isLoading ? { scale: 1.02 } : {}}
-                whileTap={!isLoading ? { scale: 0.98 } : {}}
+                whileHover={isCompleted ? { scale: 1.02 } : {}}
+                whileTap={isCompleted ? { scale: 0.98 } : {}}
               >
                 <RotateCcw size={16} />
-                <span>Попробовать еще</span>
+                <span>Try Again</span>
               </motion.button>
             </div>
           </div>
@@ -266,7 +386,6 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
             className="fixed inset-0 bg-black z-50 flex items-center justify-center"
             onClick={handleCloseFullscreen}
           >
-            {/* Close Button */}
             <motion.button
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -277,7 +396,6 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               <X size={20} />
             </motion.button>
 
-            {/* Fullscreen Image */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -293,7 +411,6 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
               />
             </motion.div>
 
-            {/* Image Info */}
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -305,7 +422,7 @@ const ResultPage = ({ onBack, onNavigation, resultData }) => {
                   {resultImage.title}
                 </h3>
                 <p className="text-xs text-gray-300">
-                  Нажмите на фон или X чтобы закрыть
+                  Tap background or X to close
                 </p>
               </div>
             </motion.div>
